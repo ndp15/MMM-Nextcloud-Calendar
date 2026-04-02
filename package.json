@@ -1,8 +1,8 @@
 {
-    "name": "mmm-nextcloudmanager",
+    "name": "mmm-nextcloud-calendar",
     "version": "2.0.0",
     "description": "MagicMirror² module for managing multiple Nextcloud calendars via WebDAV",
-    "main": "MMM-NextcloudManager.js",
+    "main": "MMM-Nextcloud-Calendar.js",
     "scripts": {
         "test": "echo \"No tests\" && exit 0"
     },

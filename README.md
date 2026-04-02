@@ -1,4 +1,4 @@
-# MMM-NextcloudManager
+# MMM-Nextcloud-Calendar
 
 A feature-rich MagicMirror² module for seamlessly managing, viewing and editing multiple Nextcloud calendars directly from your smart mirror.
 
@@ -18,8 +18,8 @@ Navigate to your MagicMirror's `modules` folder and clone this repository. Note 
 
 ```bash
 cd ~/MagicMirror/modules
-git clone https://github.com/ndp15/MMM-Nextcloud-Calendar.git MMM-NextcloudManager
-cd MMM-NextcloudManager
+git clone https://github.com/ndp15/MMM-Nextcloud-Calendar.git MMM-Nextcloud-Calendar
+cd MMM-Nextcloud-Calendar
 npm install
 ```
 
@@ -29,7 +29,7 @@ Add the module to your MagicMirror's `config/config.js` file:
 
 ```javascript
 {
-    module: "MMM-NextcloudManager",
+    module: "MMM-Nextcloud-Calendar",
     position: "bottom_center",
     config: {
         refreshInterval: 60000, // 1 minute

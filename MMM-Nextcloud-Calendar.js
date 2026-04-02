@@ -1,4 +1,4 @@
- Module.register("MMM-NextcloudManager", { // eslint-disable-line no-unused-vars TEST
+ Module.register("MMM-Nextcloud-Calendar", { // eslint-disable-line no-unused-vars TEST
     defaults: {
         calendars: [], //Test
         refreshInterval: 1 * 60 * 1000, // 1 Minute - eigener Server
@@ -102,7 +102,7 @@
 
     getStyles: function () {
         return [
-            "MMM-NextcloudManager.css",
+            "MMM-Nextcloud-Calendar.css",
             "node_modules/simple-keyboard/build/css/index.css"
         ];
     },
@@ -1892,7 +1892,7 @@
                 if (moves < maxMoves) {
                     setTimeout(tryInit, 200);
                 } else {
-                    console.error("MMM-NextcloudManager: SimpleKeyboard library not loaded after timeout.");
+                    console.error("MMM-Nextcloud-Calendar: SimpleKeyboard library not loaded after timeout.");
                     kb.innerHTML = "<div style='color:red; text-align:center; padding:20px;'>Fehler: Tastatur-Bibliothek nicht geladen.<br>Bitte prüfen: <code>npm install simple-keyboard</code> im Modul-Ordner ausgeführt?</div>";
                 }
             }
@@ -1919,7 +1919,7 @@
         }
 
         if (!KeyboardClass) {
-            console.error("MMM-NextcloudManager: SimpleKeyboard class could not be resolved.");
+            console.error("MMM-Nextcloud-Calendar: SimpleKeyboard class could not be resolved.");
             console.log("Debug: typeof SimpleKeyboard is", typeof SimpleKeyboard);
 
             const kb = document.getElementById("ncm-kb-main");
@@ -1987,9 +1987,9 @@
                 preventMouseDownDefault: true,
                 stopMouseDownPropagation: true
             });
-            console.log("MMM-NextcloudManager: SimpleKeyboard initialized successfully.");
+            console.log("MMM-Nextcloud-Calendar: SimpleKeyboard initialized successfully.");
         } catch (e) {
-            console.error("MMM-NextcloudManager: Error initializing keyboard:", e);
+            console.error("MMM-Nextcloud-Calendar: Error initializing keyboard:", e);
             const kb = document.getElementById("ncm-kb-main");
             if (kb) kb.innerHTML = "<div style='color:red; text-align:center;'>Fehler beim Starten der Tastatur: " + e.message + "</div>";
         }

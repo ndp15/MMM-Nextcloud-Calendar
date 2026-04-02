@@ -5,7 +5,7 @@ const { v4: uuidv4 } = require("uuid");
 
 module.exports = NodeHelper.create({
     start: function () {
-        console.log("MMM-NextcloudManager: Helper gestartet (STABLE MODE)");
+        console.log("MMM-Nextcloud-Calendar: Helper gestartet (STABLE MODE)");
     },
 
     socketNotificationReceived: function (notification, payload) {
@@ -33,10 +33,10 @@ module.exports = NodeHelper.create({
 
         for (const cal of calList) {
             try {
-                console.log(`MMM-NextcloudManager: Lade ${cal.name}...`);
+                console.log(`MMM-Nextcloud-Calendar: Lade ${cal.name}...`);
                 const events = await this.fetchCalendar(cal);
                 allEvents.push(...events);
-                console.log(`MMM-NextcloudManager: ${events.length} Events geladen.`);
+                console.log(`MMM-Nextcloud-Calendar: ${events.length} Events geladen.`);
             } catch (error) {
                 // Detaillierte Fehlerinfo
                 let errMsg = error.message || "Unbekannter Fehler";
@@ -47,11 +47,11 @@ module.exports = NodeHelper.create({
                         const data = typeof error.response.data === 'string'
                             ? error.response.data.substring(0, 300)
                             : JSON.stringify(error.response.data).substring(0, 300);
-                        console.error(`MMM-NextcloudManager: Response Data: ${data}`);
+                        console.error(`MMM-Nextcloud-Calendar: Response Data: ${data}`);
                     }
                 }
-                console.error(`MMM-NextcloudManager: Fehler bei ${cal.name}: ${errMsg}`);
-                console.error(`MMM-NextcloudManager: URL war: ${cal.url}`);
+                console.error(`MMM-Nextcloud-Calendar: Fehler bei ${cal.name}: ${errMsg}`);
+                console.error(`MMM-Nextcloud-Calendar: URL war: ${cal.url}`);
             }
         }
 
@@ -87,7 +87,7 @@ module.exports = NodeHelper.create({
         } catch (error) {
             // Bei Timeout: bis zu 3 Versuche
             if ((error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET') && retryCount < 2) {
-                console.log(`MMM-NextcloudManager: Retry ${retryCount + 1} für ${cal.name}...`);
+                console.log(`MMM-Nextcloud-Calendar: Retry ${retryCount + 1} für ${cal.name}...`);
                 await new Promise(r => setTimeout(r, 2000)); // 2s warten
                 return this.fetchCalendar(cal, retryCount + 1);
             }
@@ -257,9 +257,9 @@ module.exports = NodeHelper.create({
             const { calendar, event } = payload;
 
             // Debug logging
-            console.log("MMM-NextcloudManager: CREATE_EVENT empfangen");
-            console.log("MMM-NextcloudManager: Kalender URL:", calendar?.url);
-            console.log("MMM-NextcloudManager: Event Titel:", event?.title);
+            console.log("MMM-Nextcloud-Calendar: CREATE_EVENT empfangen");
+            console.log("MMM-Nextcloud-Calendar: Kalender URL:", calendar?.url);
+            console.log("MMM-Nextcloud-Calendar: Event Titel:", event?.title);
 
             if (!calendar || !calendar.url || !calendar.user || !calendar.pass) {
                 throw new Error("Kalender-Daten fehlen (URL/User/Pass)");
@@ -317,7 +317,7 @@ module.exports = NodeHelper.create({
             if (!url.endsWith("/")) url += "/";
             const putUrl = url + filename;
 
-            console.log("MMM-NextcloudManager: PUT URL:", putUrl);
+            console.log("MMM-Nextcloud-Calendar: PUT URL:", putUrl);
 
             await axios.put(putUrl, lines.join("\r\n"), {
                 auth: { username: calendar.user, password: calendar.pass },
@@ -325,7 +325,7 @@ module.exports = NodeHelper.create({
                 timeout: 60000
             });
 
-            console.log("MMM-NextcloudManager: Event erfolgreich erstellt!");
+            console.log("MMM-Nextcloud-Calendar: Event erfolgreich erstellt!");
             this.sendSocketNotification("CREATE_RESULT", { success: true });
         } catch (error) {
             let errMsg = error.message || "Unbekannter Fehler";
@@ -336,10 +336,10 @@ module.exports = NodeHelper.create({
                     const data = typeof error.response.data === 'string'
                         ? error.response.data.substring(0, 300)
                         : JSON.stringify(error.response.data).substring(0, 300);
-                    console.error("MMM-NextcloudManager: Create Response Data:", data);
+                    console.error("MMM-Nextcloud-Calendar: Create Response Data:", data);
                 }
             }
-            console.error("MMM-NextcloudManager: Create Fehler:", errMsg);
+            console.error("MMM-Nextcloud-Calendar: Create Fehler:", errMsg);
             this.sendSocketNotification("CREATE_RESULT", { success: false, error: errMsg });
         }
     },
@@ -424,7 +424,7 @@ module.exports = NodeHelper.create({
                 auth: { username: user, password: pass },
                 timeout: 120000, // 2 Minuten Timeout!
                 headers: {
-                    "User-Agent": "MMM-NextcloudManager/2.0",
+                    "User-Agent": "MMM-Nextcloud-Calendar/2.0",
                     "Accept": "*/*"
                 }
             });
