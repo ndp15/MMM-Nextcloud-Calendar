@@ -18,7 +18,7 @@ Navigate to your MagicMirror's `modules` folder and clone this repository. Note 
 
 ```bash
 cd ~/MagicMirror/modules
-git clone https://github.com/ndp15/MMM-Nextcloud-Calendar.git MMM-Nextcloud-Calendar
+git clone https://github.com/ndp15/MMM-Nextcloud-Calendar.git
 cd MMM-Nextcloud-Calendar
 npm install
 ```
