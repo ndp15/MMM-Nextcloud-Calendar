@@ -1,6 +1,6 @@
- Module.register("MMM-NextcloudManager", { // eslint-disable-line no-unused-vars
+ Module.register("MMM-NextcloudManager", { // eslint-disable-line no-unused-vars TEST
     defaults: {
-        calendars: [],//test
+        calendars: [], //Test
         refreshInterval: 1 * 60 * 1000, // 1 Minute - eigener Server
     },
 
@@ -116,6 +116,10 @@
                 this.updateDom();
             }
         } else if (notification === "CREATE_RESULT") {
+            this.closeAllModals();
+            if (payload.success) this.loadEvents();
+            else this.showAlert("Fehler: " + payload.error);
+        } else if (notification === "UPDATE_RESULT") {
             this.closeAllModals();
             if (payload.success) this.loadEvents();
             else this.showAlert("Fehler: " + payload.error);
@@ -555,9 +559,6 @@
             const item = document.createElement("div");
             const isActive = self.activeFilters.includes(cal.name);
             item.className = "ncm-legend-item" + (isActive ? "" : " ncm-legend-inactive");
-            item.style.cursor = "pointer";
-            item.style.opacity = isActive ? "1" : "0.35";
-            item.style.transition = "opacity 0.2s ease";
 
             const dot = document.createElement("span");
             dot.className = "ncm-legend-dot";
@@ -749,20 +750,30 @@
         return m;
     },
 
+    escapeHtml: function (str) {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    },
+
     openDetailModal: function (ev) {
         const self = this;
         const mod = document.getElementById("ncm-detail-modal");
         document.getElementById("ncm-detail-title").textContent = ev.title;
 
-        let html = `<div class="ncm-row"><span class="ncm-lbl">Kalender</span><span class="ncm-badge ncm-detail-badge" style="background:${ev.calendarColor}">${ev.calendarName}</span></div>`;
+        const esc = (s) => self.escapeHtml(s);
+        let html = `<div class="ncm-row"><span class="ncm-lbl">Kalender</span><span class="ncm-badge ncm-detail-badge" style="background:${esc(ev.calendarColor)}">${esc(ev.calendarName)}</span></div>`;
         html += `<div class="ncm-row"><span class="ncm-lbl">Zeit</span><span>${this.formatTime(ev)}</span></div>`;
-        if (ev.location) html += `<div class="ncm-row"><span class="ncm-lbl">Ort</span><span>${ev.location}</span></div>`;
-        if (ev.attendees?.length) html += `<div class="ncm-row"><span class="ncm-lbl">Personen</span><span>${ev.attendees.join(", ")}</span></div>`;
-        if (ev.description) html += `<div class="ncm-row"><span class="ncm-lbl">Notizen</span><span class="ncm-notes">${ev.description}</span></div>`;
+        if (ev.location) html += `<div class="ncm-row"><span class="ncm-lbl">Ort</span><span>${esc(ev.location)}</span></div>`;
+        if (ev.attendees?.length) html += `<div class="ncm-row"><span class="ncm-lbl">Personen</span><span>${esc(ev.attendees.join(", "))}</span></div>`;
+        if (ev.description) html += `<div class="ncm-row"><span class="ncm-lbl">Notizen</span><span class="ncm-notes">${esc(ev.description)}</span></div>`;
         // Wiederholen-Info anzeigen
         if (ev.isRecurring) {
             const recLabel = self.getRecurrenceLabel(ev.rrule);
-            html += `<div class="ncm-row"><span class="ncm-lbl">Wiederholen</span><span>${self.icon("repeat")} ${recLabel}</span></div>`;
+            html += `<div class="ncm-row"><span class="ncm-lbl">Wiederholen</span><span>${self.icon("repeat")} ${esc(recLabel)}</span></div>`;
         }
 
         document.getElementById("ncm-detail-content").innerHTML = html;
@@ -786,11 +797,13 @@
                 this.showRecurringChoice("Wiederkehrenden Termin löschen?", "delete", (choice) => {
                     if (choice === "all") {
                         // Ganze Serie löschen (die .ics Datei löschen)
+                        this.showLoading("Termin wird gelöscht…");
                         this.sendSocketNotification("DELETE_EVENT", { href: ev.href, user: ev.calendarUser, pass: ev.calendarPass });
                     }
                 });
             } else {
                 this.showConfirm("Termin wirklich löschen?", () => {
+                    this.showLoading("Termin wird gelöscht…");
                     this.sendSocketNotification("DELETE_EVENT", { href: ev.href, user: ev.calendarUser, pass: ev.calendarPass });
                 });
             }
@@ -1630,6 +1643,7 @@
 
             if (calendarChanged) {
                 // Kalender gewechselt: Altes Event löschen, neues erstellen
+                this.showLoading("Termin wird verschoben…");
                 this.sendSocketNotification("DELETE_EVENT", {
                     href: this.editingEvent.href,
                     user: this.editingEvent.calendarUser,
@@ -1642,6 +1656,7 @@
                 });
             } else {
                 // Gleicher Kalender: UPDATE via PUT
+                this.showLoading("Termin wird gespeichert…");
                 ev.lastModified = new Date();
                 this.sendSocketNotification("UPDATE_EVENT", {
                     calendar: {
@@ -1656,6 +1671,7 @@
             }
         } else {
             // CREATE: Neuer Termin
+            this.showLoading("Termin wird erstellt…");
             this.sendSocketNotification("CREATE_EVENT", {
                 calendar: { url: this.selectedCalendar.url, user: this.selectedCalendar.user, pass: this.selectedCalendar.pass },
                 event: ev,
@@ -2357,6 +2373,10 @@
         this.editingEvent = null;
         this.shiftActive = false;
         this.keyboardMode = "text";
+        if (this.suggestionsTimer) {
+            clearTimeout(this.suggestionsTimer);
+            this.suggestionsTimer = null;
+        }
     },
 
     formatTime: function (ev) {
@@ -2417,9 +2437,30 @@
         return m;
     },
 
+    showLoading: function (message) {
+        const modal = document.getElementById("ncm-alert-modal");
+        const msg = document.getElementById("ncm-alert-msg");
+        const btns = document.getElementById("ncm-alert-btns");
+
+        msg.innerHTML = "";
+        const spinner = document.createElement("div");
+        spinner.className = "ncm-spinner";
+        msg.appendChild(spinner);
+
+        const text = document.createElement("div");
+        text.textContent = message || "Bitte warten…";
+        text.style.marginTop = "4px";
+        msg.appendChild(text);
+
+        btns.innerHTML = "";
+        modal.classList.remove("ncm-hidden");
+    },
+
     showAlert: function (message) {
         const modal = document.getElementById("ncm-alert-modal");
-        document.getElementById("ncm-alert-msg").textContent = message;
+        const msgEl = document.getElementById("ncm-alert-msg");
+        msgEl.innerHTML = "";
+        msgEl.textContent = message;
 
         const btns = document.getElementById("ncm-alert-btns");
         btns.innerHTML = "";
@@ -2435,7 +2476,9 @@
 
     showConfirm: function (message, onConfirm) {
         const modal = document.getElementById("ncm-alert-modal");
-        document.getElementById("ncm-alert-msg").textContent = message;
+        const msgEl = document.getElementById("ncm-alert-msg");
+        msgEl.innerHTML = "";
+        msgEl.textContent = message;
 
         const btns = document.getElementById("ncm-alert-btns");
         btns.innerHTML = "";
@@ -2458,9 +2501,9 @@
     },
 
     showRecurringChoice: function (title, actionType, onChoice) {
-        const modal = document.getElementById("ncm-alert-modal"); // Reuse alert modal? No, create custom or reuse
-        // Wir nutzen einfach ncm-alert-modal und bauen Buttons ein
+        const modal = document.getElementById("ncm-alert-modal");
         const msg = document.getElementById("ncm-alert-msg");
+        msg.innerHTML = "";
         msg.textContent = title;
 
         const btns = document.getElementById("ncm-alert-btns");

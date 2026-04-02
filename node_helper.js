@@ -1,4 +1,4 @@
-const NodeHelper = require("node_helper");
+const NodeHelper = require("node_helper"); // Test
 const axios = require("axios");
 const ical = require("node-ical");
 const { v4: uuidv4 } = require("uuid");
@@ -343,8 +343,16 @@ module.exports = NodeHelper.create({
             let dtstart, dtend;
 
             if (event.isAllDay) {
-                dtstart = `DTSTART;VALUE=DATE:${formatDate(event.start)}`;
-                dtend = `DTEND;VALUE=DATE:${formatDate(event.end)}`;
+                // iCalendar: DTEND ist exklusiv für ganztägige Events → +1 Tag
+                const startDate = new Date(event.start);
+                const endDate = new Date(event.end);
+                if (endDate <= startDate) {
+                    endDate.setTime(startDate.getTime() + 86400000);
+                } else {
+                    endDate.setTime(endDate.getTime() + 86400000);
+                }
+                dtstart = `DTSTART;VALUE=DATE:${formatDate(startDate)}`;
+                dtend = `DTEND;VALUE=DATE:${formatDate(endDate)}`;
             } else {
                 dtstart = `DTSTART:${format(event.start)}`;
                 dtend = `DTEND:${format(event.end)}`;
@@ -375,10 +383,10 @@ module.exports = NodeHelper.create({
             });
 
             console.log("Update erfolgreich!");
-            this.sendSocketNotification("CREATE_RESULT", { success: true });
+            this.sendSocketNotification("UPDATE_RESULT", { success: true });
         } catch (error) {
             console.error("Update Fehler:", error.message);
-            this.sendSocketNotification("CREATE_RESULT", { success: false, error: error.message });
+            this.sendSocketNotification("UPDATE_RESULT", { success: false, error: error.message });
         }
     },
 

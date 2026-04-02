@@ -1,4 +1,4 @@
-/* MMM-NextcloudManager - Redesigned UI Test RR */
+/* MMM-NextcloudManager Test */
 
 .ncm-container {
     font-family: "Roboto", "Segoe UI", sans-serif;
@@ -80,7 +80,16 @@
     width: 44px;
     padding: 0;
     background: rgba(255, 255, 255, 0.1);
-    /* Test */
+    transition: background 0.15s, transform 0.1s;
+}
+
+.ncm-btn-icon:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.ncm-btn-icon:active {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(0.95);
 }
 
 .ncm-btn-full {
@@ -125,15 +134,6 @@
     align-items: center;
 }
 
-.ncm-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    padding: 6px 8px;
-    cursor: pointer;
-    touch-action: manipulation;
-}
 
 .ncm-legend-dot {
     width: 12px;
@@ -181,6 +181,12 @@
     padding-bottom: 4px;
     position: relative;
     box-sizing: border-box;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.ncm-day:not(.ncm-day-other):hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .ncm-day-other {
@@ -208,13 +214,21 @@
     justify-content: center;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
-    /* Grauer Kreis */
     margin: 0 auto;
-    /* Zentriert */
     position: relative;
     z-index: 2;
     pointer-events: auto;
     touch-action: manipulation;
+    transition: background 0.15s, transform 0.1s;
+}
+
+.ncm-day:not(.ncm-day-other) .ncm-day-num:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: scale(1.1);
+}
+
+.ncm-day:not(.ncm-day-other) .ncm-day-num:active {
+    transform: scale(0.95);
 }
 
 .ncm-day-events {
@@ -268,6 +282,16 @@
     touch-action: manipulation;
     position: relative;
     z-index: 6;
+    transition: filter 0.1s, opacity 0.1s;
+}
+
+.ncm-evt:hover {
+    filter: brightness(1.25);
+    opacity: 0.95;
+}
+
+.ncm-evt:active {
+    filter: brightness(0.9);
 }
 
 /* Multi-day event bars (slot-based, normal flow) */
@@ -377,6 +401,15 @@
     align-items: center;
     justify-content: center;
     padding: 0;
+    transition: background 0.15s;
+}
+
+.ncm-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.ncm-modal-close:active {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .ncm-modal-close svg {
@@ -409,6 +442,15 @@
     margin-bottom: 8px;
     cursor: pointer;
     border-left: 4px solid;
+    transition: background 0.15s;
+}
+
+.ncm-evt-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.ncm-evt-item:active {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .ncm-evt-title {
@@ -802,6 +844,21 @@
     }
 }
 
+/* Spinner */
+@keyframes ncm-spin {
+    to { transform: rotate(360deg); }
+}
+
+.ncm-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(255, 255, 255, 0.15);
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: ncm-spin 0.7s linear infinite;
+    margin: 0 auto 16px;
+}
+
 /* Custom Alert Modal */
 .ncm-modal-alert {
     max-width: 450px;
@@ -847,12 +904,35 @@
     gap: 6px;
     font-size: 13px;
     font-weight: 500;
+    padding: 6px 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+    border-radius: 6px;
+    transition: background 0.15s, opacity 0.2s;
 }
 
 .ncm-legend-dot {
     width: 14px;
     height: 14px;
     border-radius: 4px;
+    transition: opacity 0.2s;
+}
+
+.ncm-legend-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.ncm-legend-inactive {
+    opacity: 0.35;
+}
+
+.ncm-legend-inactive span:last-child {
+    text-decoration: line-through;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.ncm-legend-inactive .ncm-legend-dot {
+    filter: grayscale(1);
 }
 
 /* Clickable Date Button */
