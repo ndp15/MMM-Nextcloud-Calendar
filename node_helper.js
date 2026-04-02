@@ -1,11 +1,11 @@
-const NodeHelper = require("node_helper"); // Test
+const NodeHelper = require("node_helper");
 const axios = require("axios");
 const ical = require("node-ical");
 const { v4: uuidv4 } = require("uuid");
 
 module.exports = NodeHelper.create({
     start: function () {
-        console.log("MMM-Nextcloud-Calendar: Helper gestartet (STABLE MODE)");
+        console.log("MMM-Nextcloud-Calendar: Helper started (STABLE MODE)");
     },
 
     socketNotificationReceived: function (notification, payload) {
@@ -28,18 +28,18 @@ module.exports = NodeHelper.create({
      */
     getAllEvents: async function (calendars) {
         const allEvents = [];
-        // Config kann Array oder einzelnes Objekt sein
+        // Config can be an array or a single object
         const calList = Array.isArray(calendars) ? calendars : [calendars];
 
         for (const cal of calList) {
             try {
-                console.log(`MMM-Nextcloud-Calendar: Lade ${cal.name}...`);
+                console.log(`MMM-Nextcloud-Calendar: Loading ${cal.name}...`);
                 const events = await this.fetchCalendar(cal);
                 allEvents.push(...events);
-                console.log(`MMM-Nextcloud-Calendar: ${events.length} Events geladen.`);
+                console.log(`MMM-Nextcloud-Calendar: ${events.length} events loaded.`);
             } catch (error) {
-                // Detaillierte Fehlerinfo
-                let errMsg = error.message || "Unbekannter Fehler";
+                // Detailed error information
+                let errMsg = error.message || "Unknown error";
                 if (error.code) errMsg = `${error.code}: ${errMsg}`;
                 if (error.response) {
                     errMsg = `HTTP ${error.response.status}: ${error.response.statusText || errMsg}`;
@@ -50,8 +50,8 @@ module.exports = NodeHelper.create({
                         console.error(`MMM-Nextcloud-Calendar: Response Data: ${data}`);
                     }
                 }
-                console.error(`MMM-Nextcloud-Calendar: Fehler bei ${cal.name}: ${errMsg}`);
-                console.error(`MMM-Nextcloud-Calendar: URL war: ${cal.url}`);
+                console.error(`MMM-Nextcloud-Calendar: Error with ${cal.name}: ${errMsg}`);
+                console.error(`MMM-Nextcloud-Calendar: URL was: ${cal.url}`);
             }
         }
 
@@ -70,10 +70,10 @@ module.exports = NodeHelper.create({
      * @returns {Promise<Object[]>} A promise that resolves to an array of parsed calendar events.
      */
     fetchCalendar: async function (cal, retryCount = 0) {
-        // Wir bauen die URL ganz simpel: Basis-URL + ?export
-        // Wichtig: Wir entfernen ein eventuelles ?export aus der Config, falls du es aus Versehen drin hast
+        // Build a simple URL: Base URL + ?export
+        // Remove an existing export query argument just in case the user config has it
         let cleanUrl = cal.url.replace("?export", "");
-        if (cleanUrl.endsWith("/")) cleanUrl = cleanUrl.slice(0, -1); // Slash am Ende weg für Konsistenz
+        if (cleanUrl.endsWith("/")) cleanUrl = cleanUrl.slice(0, -1); // Remove trailing slash for consistency
 
         const exportUrl = cleanUrl + "/?export";
 
@@ -81,14 +81,14 @@ module.exports = NodeHelper.create({
             const response = await axios.get(exportUrl, {
                 auth: { username: cal.user, password: cal.pass },
                 headers: { "Content-Type": "text/calendar" },
-                timeout: 90000 // 90s Timeout (erhöht von 60s)
+                timeout: 90000 // 90s timeout
             });
             return this.parseCalendarData(response.data, cal, cleanUrl);
         } catch (error) {
-            // Bei Timeout: bis zu 3 Versuche
+            // Re-try logic up to 3 times on timeout
             if ((error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET') && retryCount < 2) {
-                console.log(`MMM-Nextcloud-Calendar: Retry ${retryCount + 1} für ${cal.name}...`);
-                await new Promise(r => setTimeout(r, 2000)); // 2s warten
+                console.log(`MMM-Nextcloud-Calendar: Retry ${retryCount + 1} for ${cal.name}...`);
+                await new Promise(r => setTimeout(r, 2000)); // Wait 2s
                 return this.fetchCalendar(cal, retryCount + 1);
             }
             throw error;
@@ -107,7 +107,7 @@ module.exports = NodeHelper.create({
         const parsed = ical.parseICS(data);
         const events = [];
 
-        // Zeitfenster: -2 Monate bis +12 Monate
+        // Timeframe: -2 months to +12 months
         const minDate = new Date(); minDate.setMonth(minDate.getMonth() - 2);
         const maxDate = new Date(); maxDate.setMonth(maxDate.getMonth() + 12);
 
@@ -115,27 +115,27 @@ module.exports = NodeHelper.create({
             const ev = parsed[key];
             if (ev.type !== "VEVENT") continue;
 
-            // UID & Filename erraten (fürs Löschen)
+            // Guess UID & Filename (used for deleting events)
             const uid = ev.uid || key;
             const filename = uid.includes(".ics") ? uid : uid + ".ics";
-            // href bauen: Basis-URL (ohne ?export) + / + filename
+            // Build absolute href path
             const href = cleanUrl + "/" + filename;
 
-            // RRULE (Wiederholungen)
+            // Calculate recurrent events
             if (ev.rrule) {
                 try {
-                    // Wir holen alle Wiederholungen im Zeitfenster
+                    // Extract all recurring dates within the timeframe
                     const dates = ev.rrule.between(minDate, maxDate, true);
                     let isAllDay = ev.start.dateOnly || false;
 
-                    // Heuristik: Midnight-to-Midnight UTC oder exakt 24h
+                    // Heuristics: Midnight-to-Midnight UTC or spanning exactly 24h
                     if (!isAllDay && ev.start && ev.end) {
                         const duration = ev.end.getTime() - ev.start.getTime();
-                        // 1. Exakt 24h-Vielfache (fängt Zeitzonen-verschobene Events wie 01:00-01:00 ab)
+                        // 1. Exact 24h multiples to catch timezone offset events (e.g. 01:00-01:00)
                         if (duration > 0 && duration % 86400000 === 0) {
                             isAllDay = true;
                         }
-                        // 2. Fallback: Start um Mitternacht UTC (fängt 23h-Events ab)
+                        // 2. Fallback: Identify midnight UTC starts (which might indicate stripped timezone data)
                         else {
                             const isMidnightUTC = (d) => d.getUTCHours() === 0 && d.getUTCMinutes() === 0 && d.getUTCSeconds() === 0;
                             if (isMidnightUTC(ev.start) && duration >= 82800000) { // >= 23h
@@ -144,11 +144,11 @@ module.exports = NodeHelper.create({
                         }
                     }
 
-                    // Für ganztägige Events: Dauer in Tagen berechnen (nicht in ms)
-                    // damit Zeitzonen-Offsets keine Rolle spielen
+                    // For all-day events: Measure duration strictly in days
+                    // Eliminating milliseconds safeguards from internal timezone offset faults
                     let durationDays = 1;
                     if (isAllDay && ev.end) {
-                        // iCal: DTEND ist exklusiv, also DTSTART=20260210, DTEND=20260211 = 1 Tag
+                        // iCal: DTEND is exclusive
                         const startDay = new Date(ev.start.getFullYear(), ev.start.getMonth(), ev.start.getDate());
                         const endDay = new Date(ev.end.getFullYear(), ev.end.getMonth(), ev.end.getDate());
                         durationDays = Math.round((endDay - startDay) / 86400000);
@@ -156,7 +156,7 @@ module.exports = NodeHelper.create({
                     }
                     const durationMs = (ev.end ? ev.end.getTime() : ev.start.getTime()) - ev.start.getTime();
 
-                    // Helper: lokales Datum als String ohne UTC-Konvertierung
+                    // Helper: Output localized ISO-string whilst skipping UTC conversion
                     const toLocalISOString = (d) => {
                         const pad = (n) => String(n).padStart(2, '0');
                         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
@@ -166,13 +166,10 @@ module.exports = NodeHelper.create({
                         let start, end, startStr, endStr;
 
                         if (isAllDay) {
-                            // Ganztägige Events: auf lokale Mitternacht normalisieren
-                            // rrule.between() kann Zeitzonen-Offsets einführen (z.B. UTC 00:00 → CET 01:00)
+                            // Reset recurrence results consistently back to local midnight constraints
                             start = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
                             end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + durationDays, 0, 0, 0);
-                            // Lokale Datums-Strings verwenden statt toISOString()
-                            // toISOString() konvertiert zu UTC, was bei CET/CEST Mitternacht
-                            // den Tag verschiebt (z.B. 12. Feb 00:00 CET → 11. Feb 23:00 UTC)
+                            
                             startStr = toLocalISOString(start);
                             endStr = toLocalISOString(end);
                         } else {
@@ -183,7 +180,7 @@ module.exports = NodeHelper.create({
                         }
 
                         events.push({
-                            title: ev.summary || "Ohne Titel",
+                            title: ev.summary || "Untitled",
                             start: startStr,
                             end: endStr,
                             isAllDay: isAllDay,

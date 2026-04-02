@@ -1,7 +1,7 @@
  Module.register("MMM-Nextcloud-Calendar", { // eslint-disable-line no-unused-vars TEST
     defaults: {
         calendars: [], //Test
-        refreshInterval: 1 * 60 * 1000, // 1 Minute - eigener Server
+        refreshInterval: 1 * 60 * 1000, // 1 minute - custom server
     },
 
     events: [],
@@ -12,9 +12,9 @@
     editEndDate: null,
     shiftActive: false,
     activeInputField: null,
-    activeFilters: [], // Kalender-Filter: aktive Kalender werden angezeigt
-    suggestionsTimer: null, // Debounce Timer für Vorschläge
-    holidaysCache: {}, // Cache für berechnete Feiertage pro Jahr
+    activeFilters: [], // Calendar filters: active calendars are displayed
+    suggestionsTimer: null, // Debounce timer for suggestions
+    holidaysCache: {}, // Cache for calculated holidays per year
 
     /**
      * Calculates the exact date of Easter for a given year using the Gauss algorithm.
@@ -52,7 +52,7 @@
         const easter = this.calculateEaster(year);
         const holidays = [];
 
-        // Fixe Feiertage
+        // Fixed holidays
         holidays.push({ date: new Date(year, 0, 1), name: "Neujahr" });
         holidays.push({ date: new Date(year, 0, 2), name: "Berchtoldstag" });
         holidays.push({ date: new Date(year, 4, 1), name: "Tag der Arbeit" });
@@ -60,7 +60,7 @@
         holidays.push({ date: new Date(year, 11, 25), name: "Weihnachten" });
         holidays.push({ date: new Date(year, 11, 26), name: "Stephanstag" });
 
-        // Ostern-basierte Feiertage
+        // Easter-based holidays
         const easterTime = easter.getTime();
         holidays.push({ date: new Date(easterTime - 2 * 86400000), name: "Karfreitag" });
         holidays.push({ date: new Date(easterTime + 1 * 86400000), name: "Ostermontag" });
@@ -93,7 +93,7 @@
         this.selectedMonth = { year: now.getFullYear(), month: now.getMonth() };
         if (this.config.calendars.length > 0) {
             this.selectedCalendar = this.config.calendars[0];
-            // Standardmässig alle Kalender aktiv
+            // All calendars active by default
             this.activeFilters = this.config.calendars.map(cal => cal.name);
         }
         this.loadEvents();
@@ -124,7 +124,7 @@
     socketNotificationReceived: function (notification, payload) {
         if (notification === "EVENTS_RESULT" && payload.success) {
             this.events = payload.events;
-            // Nur Grid aktualisieren wenn kein Modal offen ist
+            // Only update grid when no modal is open
             const editModalOpen = !document.getElementById("ncm-edit-modal")?.classList.contains("ncm-hidden");
             if (!editModalOpen) {
                 this.updateDom();
@@ -147,9 +147,9 @@
     getDom: function () {
         const w = document.createElement("div");
         w.className = "ncm-container";
-        w.appendChild(this.createLegend()); // Legende mit Plus-Button
-        w.appendChild(this.createCalendarGrid()); // Kalender-Grid
-        w.appendChild(this.createHeader()); // Navigation unten zentriert
+        w.appendChild(this.createLegend()); // Legend with plus button
+        w.appendChild(this.createCalendarGrid()); // Calendar grid
+        w.appendChild(this.createHeader()); // Bottom centered navigation
         w.appendChild(this.createDayModal());
         w.appendChild(this.createDetailModal());
         w.appendChild(this.createEditModal());
@@ -177,7 +177,7 @@
         return i[n] || "";
     },
 
-    // Plus-Button oben rechts
+    // Plus button top right
     createAddButton: function () {
         const container = document.createElement("div");
         container.className = "ncm-add-container";
@@ -192,7 +192,7 @@
         return container;
     },
 
-    // Monatsnavigation zentriert
+    // Centered month navigation
     createHeader: function () {
         const h = document.createElement("div");
         h.className = "ncm-header";

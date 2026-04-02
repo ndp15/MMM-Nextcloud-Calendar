@@ -1,6 +1,7 @@
 node_modules/
 npm-debug.log
 yarn-error.log
+dokumentation.md
 
 # OS generated files
 .DS_Store

@@ -4,24 +4,24 @@
     font-family: "Roboto", "Segoe UI", sans-serif;
     color: #fff;
     padding: 8px 18px;
-    /* 10px mehr auf jeder Seite */
+    /* 10px more on each side */
 }
 
-/* Plus-Button Container - rechts oben */
+/* Plus button container - top right */
 .ncm-add-container {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 10px;
 }
 
-/* Header/Navigation - zentriert */
+/* Header/Navigation - centered */
 .ncm-header {
     display: flex;
     justify-content: center;
-    /* Zentriert */
+    /* Centered */
     align-items: center;
     margin-top: 12px;
-    /* Abstand nach oben */
+    /* Top margin */
 }
 
 .ncm-nav {
@@ -98,7 +98,7 @@
     font-size: 16px;
 }
 
-/* Heute-Button - länger und dünner, Farben wie Neu-Button */
+/* Today button - longer and thinner, colors like New button */
 .ncm-btn-today {
     width: auto !important;
     min-height: 34px !important;
@@ -118,7 +118,7 @@
     height: 14px !important;
 }
 
-/* Legend Wrapper - Legende links, Plus-Button rechts */
+/* Legend wrapper - legend left, plus button right */
 .ncm-legend-wrapper {
     display: flex;
     justify-content: space-between;
@@ -126,7 +126,7 @@
     margin-bottom: 12px;
 }
 
-/* Legend - Kalender-Farben */
+/* Legend - calendar colors */
 .ncm-legend {
     display: flex;
     flex-wrap: wrap;
@@ -202,7 +202,7 @@
     background: #667eea;
 }
 
-/* Alle Tageszahlen mit grauem Kreis, zentriert */
+/* All day numbers with gray circle, centered */
 .ncm-day-num {
     font-size: 16px;
     font-weight: 600;
@@ -239,7 +239,7 @@
     pointer-events: auto;
 }
 
-/* Feiertage Container */
+/* Holidays container */
 .ncm-day-holidays {
     display: flex;
     flex-direction: column;
@@ -247,7 +247,7 @@
     margin-top: 2px;
 }
 
-/* Feiertage - grau/weiss, dünner */
+/* Holidays - gray/white, thinner */
 .ncm-evt-holiday {
     font-size: 9px;
     font-weight: 400;
@@ -754,7 +754,7 @@
     background: rgba(102, 126, 234, 0.6) !important;
 }
 
-/* Zeit-Tastatur */
+/* Time keyboard */
 .ncm-kb-time {
     max-width: 300px;
     margin: 0 auto;
@@ -772,7 +772,7 @@
     font-weight: 600;
 }
 
-/* Vorschläge-Bar - Apple Style */
+/* Suggestions bar - Apple Style */
 .ncm-suggestions-bar {
     display: flex;
     gap: 0;
@@ -1419,14 +1419,14 @@
    iOS-STYLE EDIT MODAL
    ======================================== */
 
-/* iOS Modal - Grösser gemacht */
+/* iOS Modal - Made larger */
 .ncm-modal-ios {
     max-width: 650px;
-    /* Grösser */
+    /* Larger */
     max-height: 90vh;
-    /* Grösser */
+    /* Larger */
     width: 95vw;
-    /* Grösser */
+    /* Larger */
     height: auto;
     border-radius: 20px;
     padding: 0;
@@ -1436,7 +1436,7 @@
     overflow: hidden;
 }
 
-/* iOS Header - Grösser */
+/* iOS Header - Larger */
 .ncm-ios-header {
     display: flex;
     align-items: center;
@@ -1449,9 +1449,9 @@
 
 .ncm-ios-header-btn {
     width: 44px;
-    /* Grösser */
+    /* Larger */
     height: 44px;
-    /* Grösser */
+    /* Larger */
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     border: none;
@@ -1463,9 +1463,9 @@
 
 .ncm-ios-header-btn svg {
     width: 24px;
-    /* Grösser */
+    /* Larger */
     height: 24px;
-    /* Grösser */
+    /* Larger */
     stroke: #fff;
 }
 
@@ -1475,12 +1475,12 @@
 
 .ncm-ios-header-title {
     font-size: 20px;
-    /* Grösser */
+    /* Larger */
     font-weight: 600;
     color: #fff;
 }
 
-/* iOS Tab Toggle (Ereignis/Erinnerung) */
+/* iOS Tab Toggle (Event/Reminder) */
 .ncm-ios-tabs {
     display: flex;
     background: rgba(255, 255, 255, 0.1);
@@ -1494,13 +1494,13 @@
 .ncm-ios-tab {
     flex: 1;
     padding: 10px 20px;
-    /* Grösser */
+    /* Larger */
     border: none;
     border-radius: 6px;
     background: transparent;
     color: rgba(255, 255, 255, 0.6);
     font-size: 15px;
-    /* Grösser */
+    /* Larger */
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -1511,7 +1511,7 @@
     color: #fff;
 }
 
-/* iOS Form Content - Grösser */
+/* iOS Form Content - Larger */
 .ncm-ios-content {
     flex: 1;
     overflow-y: auto;
@@ -1524,13 +1524,13 @@
 .ncm-ios-section {
     background: #1c1c1e;
     border-radius: 14px;
-    /* Grösser */
+    /* Larger */
     margin-bottom: 16px;
     /* Mehr Margin */
     overflow: hidden;
 }
 
-/* iOS Input Row - Grösser, mit Trennlinie */
+/* iOS Input Row - Larger, with separator */
 .ncm-ios-row {
     padding: 20px 20px;
     /* Grösserer Klickbereich */
@@ -1710,7 +1710,7 @@
     border-color: #fff;
 }
 
-/* iOS Keyboard Area - Grösser */
+/* iOS Keyboard Area - Larger */
 .ncm-ios-keyboard {
     flex-shrink: 0;
     background: #2c2c2e;
@@ -1718,7 +1718,7 @@
     /* Mehr Padding */
 }
 
-/* Enhanced Keyboard Keys for Touch - Schnell ohne Transitions */
+/* Enhanced Keyboard Keys for Touch - Fast without transitions */
 .ncm-key {
     -webkit-tap-highlight-color: transparent;
     user-select: none;
@@ -1963,7 +1963,7 @@
     margin-bottom: 0 !important;
 }
 
-/* Spezielle Tasten */
+/* Special keys */
 .ncm-simple-keyboard .ncm-sk-special {
     background: rgba(255, 255, 255, 0.22) !important;
     font-size: 18px !important;
@@ -1972,14 +1972,14 @@
     min-width: 70px !important;
 }
 
-/* Enter-Taste - grösser */
+/* Enter key - larger */
 .ncm-simple-keyboard .hg-button[data-skbtn="{enter}"] {
     background: rgba(102, 126, 234, 0.6) !important;
     flex-grow: 2 !important;
     min-width: 80px !important;
 }
 
-/* Shift-Taste - blau bei aktiv */
+/* Shift key - blue when active */
 .ncm-simple-keyboard .hg-button[data-skbtn="{shift}"]:active,
 .ncm-simple-keyboard.shift-active .hg-button[data-skbtn="{shift}"],
 .ncm-simple-keyboard .shift-active-btn {
@@ -1987,7 +1987,7 @@
     color: #fff !important;
 }
 
-/* Leertaste - deutlich grösser wie im Bild */
+/* Space bar - significantly larger as in image */
 .ncm-simple-keyboard .ncm-sk-space {
     flex-grow: 6 !important;
     width: auto !important;
@@ -1995,7 +1995,7 @@
     font-size: 18px !important;
 }
 
-/* 123-Taste gleich gross wie Enter */
+/* 123 key same size as Enter */
 .ncm-simple-keyboard .hg-button[data-skbtn="{numbers}"],
 .ncm-simple-keyboard .hg-button[data-skbtn="{abc}"],
 .ncm-simple-keyboard .hg-button[data-skbtn="{symbols}"] {
