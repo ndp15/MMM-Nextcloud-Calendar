@@ -20,6 +20,12 @@ module.exports = NodeHelper.create({
         }
     },
 
+    /**
+     * Initiates parallel WebDAV calendar fetches for multiple distinct configurations.
+     * Maps error traces comprehensively per instance if execution fails.
+     * @param {Object|Object[]} calendars - The selected sources from module config.
+     * @returns {Promise<void>} Sends "EVENTS_RESULT" socket notification upon success.
+     */
     getAllEvents: async function (calendars) {
         const allEvents = [];
         // Config kann Array oder einzelnes Objekt sein
@@ -57,6 +63,12 @@ module.exports = NodeHelper.create({
         });
     },
 
+    /**
+     * Fetches the calendar data successfully, with built-in retry logic logic and timeout.
+     * @param {Object} cal - The calendar configuration.
+     * @param {number} retryCount - Current attempt iteration count.
+     * @returns {Promise<Object[]>} A promise that resolves to an array of parsed calendar events.
+     */
     fetchCalendar: async function (cal, retryCount = 0) {
         // Wir bauen die URL ganz simpel: Basis-URL + ?export
         // Wichtig: Wir entfernen ein eventuelles ?export aus der Config, falls du es aus Versehen drin hast
@@ -83,6 +95,14 @@ module.exports = NodeHelper.create({
         }
     },
 
+    /**
+     * Processes fetched calendar raw ICAL format string into structured JavaScript events.
+     * Maps recurrent, all-day and scheduled events accordingly within a specific timeframe.
+     * @param {string} data - ICAL string feed.
+     * @param {Object} cal - Configuration attributes bound to the respective calendar scope.
+     * @param {string} cleanUrl - The sanitized WebDAV link serving as the origin.
+     * @returns {Object[]} Parsed event items structured by the helper.
+     */
     parseCalendarData: function (data, cal, cleanUrl) {
         const parsed = ical.parseICS(data);
         const events = [];

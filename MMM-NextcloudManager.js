@@ -16,7 +16,11 @@
     suggestionsTimer: null, // Debounce Timer für Vorschläge
     holidaysCache: {}, // Cache für berechnete Feiertage pro Jahr
 
-    // Berechnet Ostersonntag für ein Jahr (Gauss-Algorithmus)
+    /**
+     * Calculates the exact date of Easter for a given year using the Gauss algorithm.
+     * @param {number} year - The year to calculate Easter for.
+     * @returns {Date} The Easter date.
+     */
     calculateEaster: function (year) {
         const a = year % 19;
         const b = Math.floor(year / 100);
@@ -35,7 +39,11 @@
         return new Date(year, month, day);
     },
 
-    // Gibt alle Schweizer Feiertage für ein Jahr zurück
+    /**
+     * Retrieves all public Swiss holidays for a specific year, relying on the internal cache if possible.
+     * @param {number} year - The target year for holiday retrieval.
+     * @returns {Object[]} An array comprising date objects and their respective holiday names.
+     */
     getSwissHolidays: function (year) {
         if (this.holidaysCache[year]) {
             return this.holidaysCache[year];
@@ -63,7 +71,13 @@
         return holidays;
     },
 
-    // Gibt Feiertage für einen bestimmten Tag zurück
+    /**
+     * Checks if a specified day conforms to any known Swiss holiday.
+     * @param {number} y - Full year.
+     * @param {number} m - Zero-based month.
+     * @param {number} d - Date of the month.
+     * @returns {Object[]} The list of matched holidays filtering down exactly to that day.
+     */
     getHolidaysForDay: function (y, m, d) {
         const holidays = this.getSwissHolidays(y);
         return holidays.filter(h => {
