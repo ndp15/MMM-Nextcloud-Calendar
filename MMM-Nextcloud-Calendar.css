@@ -1,27 +1,81 @@
-/* MMM-NextcloudManager Test */
+/* MMM-Nextcloud-Calendar styles */
+
+/* ── Base container ──────────────────────────────────────────── */
 
 .ncm-container {
     font-family: "Roboto", "Segoe UI", sans-serif;
     color: #fff;
     padding: 8px 18px;
-    /* 10px more on each side */
 }
 
-/* Plus button container - top right */
-.ncm-add-container {
+/* ── Legend wrapper: calendar dots left, plus button right ───── */
+
+.ncm-legend-wrapper {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 10px;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
 }
 
-/* Header/Navigation - centered */
+.ncm-legend {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+    margin-top: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    justify-content: center;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ncm-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+    border-radius: 6px;
+    transition: background 0.15s, opacity 0.2s;
+}
+
+.ncm-legend-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+    transition: opacity 0.2s;
+}
+
+.ncm-legend-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* Filtered-out (inactive) calendar */
+.ncm-legend-inactive {
+    opacity: 0.35;
+}
+
+.ncm-legend-inactive span:last-child {
+    text-decoration: line-through;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.ncm-legend-inactive .ncm-legend-dot {
+    filter: grayscale(1);
+}
+
+/* ── Header / month navigation ───────────────────────────────── */
+
 .ncm-header {
     display: flex;
     justify-content: center;
-    /* Centered */
     align-items: center;
     margin-top: 12px;
-    /* Top margin */
 }
 
 .ncm-nav {
@@ -38,11 +92,12 @@
     text-transform: capitalize;
 }
 
-/* Buttons */
+/* ── Buttons ─────────────────────────────────────────────────── */
+
 .ncm-btn {
     min-height: 44px;
     padding: 10px 16px;
-    border: none; 
+    border: none;
     border-radius: 10px;
     font-size: 14px;
     font-weight: 500;
@@ -78,7 +133,10 @@
 
 .ncm-btn-icon {
     width: 44px;
-    padding: 0;
+    height: 44px;
+    min-height: 44px;
+    padding: 8px;
+    border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     transition: background 0.15s, transform 0.1s;
 }
@@ -98,7 +156,7 @@
     font-size: 16px;
 }
 
-/* Today button - longer and thinner, colors like New button */
+/* "Today" button — slim, shown only when not viewing the current month */
 .ncm-btn-today {
     width: auto !important;
     min-height: 34px !important;
@@ -118,30 +176,16 @@
     height: 14px !important;
 }
 
-/* Legend wrapper - legend left, plus button right */
-.ncm-legend-wrapper {
+/* ── Plus button (top-right, inside legend wrapper) ──────────── */
+
+.ncm-add-container {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
+    justify-content: flex-end;
+    margin-bottom: 10px;
 }
 
-/* Legend - calendar colors */
-.ncm-legend {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-}
+/* ── Calendar grid ───────────────────────────────────────────── */
 
-
-.ncm-legend-dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-}
-
-/* Calendar Grid */
 .ncm-calendar {
     background: rgba(0, 0, 0, 0.35);
     backdrop-filter: blur(16px);
@@ -172,6 +216,8 @@
     gap: 2px;
 }
 
+/* ── Individual day cells ────────────────────────────────────── */
+
 .ncm-day {
     min-height: 110px;
     background: rgba(255, 255, 255, 0.02);
@@ -182,6 +228,7 @@
     position: relative;
     box-sizing: border-box;
     transition: background 0.15s, border-color 0.15s;
+    pointer-events: auto !important;
 }
 
 .ncm-day:not(.ncm-day-other):hover {
@@ -189,10 +236,12 @@
     border-color: rgba(255, 255, 255, 0.12);
 }
 
+/* Days outside the current month */
 .ncm-day-other {
     opacity: 0.15;
 }
 
+/* Today highlight */
 .ncm-day-today {
     background: rgba(102, 126, 234, 0.15);
     border-color: rgba(102, 126, 234, 0.35);
@@ -202,7 +251,8 @@
     background: #667eea;
 }
 
-/* All day numbers with gray circle, centered */
+/* ── Day number badge ────────────────────────────────────────── */
+
 .ncm-day-num {
     font-size: 16px;
     font-weight: 600;
@@ -217,9 +267,11 @@
     margin: 0 auto;
     position: relative;
     z-index: 2;
-    pointer-events: auto;
+    pointer-events: auto !important;
+    cursor: pointer !important;
     touch-action: manipulation;
     transition: background 0.15s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .ncm-day:not(.ncm-day-other) .ncm-day-num:hover {
@@ -231,15 +283,22 @@
     transform: scale(0.95);
 }
 
+.ncm-day-today .ncm-day-num {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* ── Event containers ────────────────────────────────────────── */
+
 .ncm-day-events {
     display: flex;
     flex-direction: column;
     gap: 2px;
     margin-top: 2px;
-    pointer-events: auto;
+    pointer-events: auto !important;
 }
 
-/* Holidays container */
+/* Holidays shown below normal events */
 .ncm-day-holidays {
     display: flex;
     flex-direction: column;
@@ -247,7 +306,62 @@
     margin-top: 2px;
 }
 
-/* Holidays - gray/white, thinner */
+/* ── Event chips ─────────────────────────────────────────────── */
+
+.ncm-evt {
+    font-size: 11px;
+    font-weight: 500;
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer !important;
+    min-height: 18px;
+    line-height: 1.3;
+    box-sizing: border-box;
+    pointer-events: auto !important;
+    touch-action: manipulation;
+    position: relative;
+    z-index: 6;
+    transition: filter 0.1s, opacity 0.1s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ncm-evt:hover {
+    filter: brightness(1.25);
+    opacity: 0.95;
+}
+
+.ncm-evt:active {
+    filter: brightness(0.9);
+}
+
+/* Multi-day event bar wrapper */
+.ncm-slot-row {
+    flex-shrink: 0;
+}
+
+.ncm-multiday-bar {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* "+N more" overflow indicator */
+.ncm-more {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    margin-top: 2px;
+    position: relative;
+    z-index: 8;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Holiday chip */
 .ncm-evt-holiday {
     font-size: 9px;
     font-weight: 400;
@@ -264,58 +378,24 @@
     border-left: 2px solid rgba(255, 255, 255, 0.35);
 }
 
-/* Event Indicators - Apple Calendar Style */
-.ncm-evt {
-    font-size: 11px;
-    font-weight: 500;
-    color: #fff;
-    padding: 3px 6px;
-    border-radius: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    cursor: pointer;
-    min-height: 18px;
-    line-height: 1.3;
-    box-sizing: border-box;
-    pointer-events: auto;
-    touch-action: manipulation;
-    position: relative;
-    z-index: 6;
-    transition: filter 0.1s, opacity 0.1s;
+/* Repeat icon on recurring events */
+.ncm-evt-repeat-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+    vertical-align: middle;
+    opacity: 0.7;
 }
 
-.ncm-evt:hover {
-    filter: brightness(1.25);
-    opacity: 0.95;
+.ncm-evt-repeat-icon svg {
+    width: 10px;
+    height: 10px;
+    stroke: rgba(255, 255, 255, 0.8);
+    stroke-width: 2.5;
 }
 
-.ncm-evt:active {
-    filter: brightness(0.9);
-}
+/* ── Modal overlay ───────────────────────────────────────────── */
 
-/* Multi-day event bars (slot-based, normal flow) */
-.ncm-slot-row {
-    flex-shrink: 0;
-}
-
-.ncm-multiday-bar {
-    pointer-events: auto;
-    touch-action: manipulation;
-}
-
-.ncm-more {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.5);
-    text-align: center;
-    margin-top: 2px;
-    position: relative;
-    z-index: 8;
-    pointer-events: auto !important;
-    cursor: pointer !important;
-}
-
-/* MODAL - Centered */
 .ncm-modal {
     position: fixed;
     inset: 0;
@@ -341,6 +421,7 @@
     position: relative;
 }
 
+/* Edit modal occupies most of the viewport */
 .ncm-modal-edit {
     max-width: 92vw;
     max-height: 85vh;
@@ -354,7 +435,8 @@
     overflow: hidden;
 }
 
-/* Three-layer layout */
+/* ── Edit modal layout (three-layer: header / form / keyboard) ── */
+
 .ncm-edit-header {
     flex-shrink: 0;
     padding: 16px 20px 8px;
@@ -386,6 +468,8 @@
     padding: 10px;
     background: rgba(0, 0, 0, 0.3);
 }
+
+/* ── Modal close button ──────────────────────────────────────── */
 
 .ncm-modal-close {
     position: absolute;
@@ -426,7 +510,8 @@
     padding-right: 0;
 }
 
-/* Event List in Day Modal */
+/* ── Day modal — event list ──────────────────────────────────── */
+
 .ncm-evt-list {
     max-height: 300px;
     overflow-y: auto;
@@ -471,7 +556,8 @@
     font-size: 14px;
 }
 
-/* Details Modal */
+/* ── Detail modal ────────────────────────────────────────────── */
+
 .ncm-details {
     margin-bottom: 16px;
 }
@@ -497,6 +583,11 @@
     font-size: 12px;
 }
 
+/* Black text on coloured calendar badge */
+.ncm-detail-badge {
+    color: #000 !important;
+}
+
 .ncm-notes {
     white-space: pre-wrap;
     font-size: 13px;
@@ -513,7 +604,17 @@
     flex: 1;
 }
 
-/* Edit Modal Sections */
+/* Repeat icon inside detail rows */
+.ncm-row svg {
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+    display: inline;
+    margin-right: 4px;
+}
+
+/* ── Form sections (edit modal) ──────────────────────────────── */
+
 .ncm-section {
     margin-bottom: 8px;
 }
@@ -590,7 +691,8 @@
     height: 20px;
 }
 
-/* Calendar Selector */
+/* ── Calendar selector grid ──────────────────────────────────── */
+
 .ncm-cal-grid {
     display: flex;
     gap: 8px;
@@ -613,7 +715,8 @@
     box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
 }
 
-/* Date Wheels - Side by Side */
+/* ── Date scroll-wheel row ───────────────────────────────────── */
+
 .ncm-date-row {
     display: flex;
     gap: 12px;
@@ -684,7 +787,8 @@
     font-weight: 700;
 }
 
-/* KEYBOARD - Full Width Rectangle */
+/* ── On-screen keyboard ──────────────────────────────────────── */
+
 .ncm-kb {
     margin-top: 0;
     padding: 6px 4px;
@@ -720,8 +824,9 @@
     user-select: none;
 }
 
-.ncm-key:active {
-    background: rgba(102, 126, 234, 0.7);
+.ncm-key:active,
+.ncm-key.ncm-key-pressed {
+    background: rgba(102, 126, 234, 0.7) !important;
 }
 
 .ncm-key-toggle {
@@ -754,7 +859,7 @@
     background: rgba(102, 126, 234, 0.6) !important;
 }
 
-/* Time keyboard */
+/* Compact numeric keyboard for time input */
 .ncm-kb-time {
     max-width: 300px;
     margin: 0 auto;
@@ -772,7 +877,8 @@
     font-weight: 600;
 }
 
-/* Suggestions bar - Apple Style */
+/* ── Autocomplete suggestions bar ────────────────────────────── */
+
 .ncm-suggestions-bar {
     display: flex;
     gap: 0;
@@ -812,12 +918,14 @@
     margin: 8px 0;
 }
 
-/* Hidden */
+/* ── Utility ─────────────────────────────────────────────────── */
+
 .ncm-hidden {
     display: none !important;
 }
 
-/* Scrollbar */
+/* ── Scrollbar ───────────────────────────────────────────────── */
+
 ::-webkit-scrollbar {
     width: 6px;
 }
@@ -831,7 +939,8 @@
     border-radius: 3px;
 }
 
-/* Responsive */
+/* ── Responsive ──────────────────────────────────────────────── */
+
 @media (max-width: 500px) {
     .ncm-modal-content {
         max-width: 95%;
@@ -844,7 +953,8 @@
     }
 }
 
-/* Spinner */
+/* ── Loading spinner ─────────────────────────────────────────── */
+
 @keyframes ncm-spin {
     to { transform: rotate(360deg); }
 }
@@ -859,7 +969,8 @@
     margin: 0 auto 16px;
 }
 
-/* Custom Alert Modal */
+/* ── Alert modal ─────────────────────────────────────────────── */
+
 .ncm-modal-alert {
     max-width: 450px;
     text-align: center;
@@ -883,59 +994,8 @@
     min-width: 120px;
 }
 
-/* Calendar Legend */
-.ncm-legend {
-    display: inline-flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 12px;
-    margin-top: 8px;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 10px;
-    justify-content: center;
-    width: fit-content;
-    margin-left: auto;
-    margin-right: auto;
-}
+/* ── Clickable date button ───────────────────────────────────── */
 
-.ncm-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 8px;
-    cursor: pointer;
-    touch-action: manipulation;
-    border-radius: 6px;
-    transition: background 0.15s, opacity 0.2s;
-}
-
-.ncm-legend-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
-    transition: opacity 0.2s;
-}
-
-.ncm-legend-item:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.ncm-legend-inactive {
-    opacity: 0.35;
-}
-
-.ncm-legend-inactive span:last-child {
-    text-decoration: line-through;
-    color: rgba(255, 255, 255, 0.5);
-}
-
-.ncm-legend-inactive .ncm-legend-dot {
-    filter: grayscale(1);
-}
-
-/* Clickable Date Button */
 .ncm-date-btn {
     background: rgba(102, 126, 234, 0.2);
     border: 1px solid rgba(102, 126, 234, 0.4);
@@ -953,7 +1013,8 @@
     background: rgba(102, 126, 234, 0.3);
 }
 
-/* Date Picker Modal - must be above edit modal */
+/* ── Date/time picker modals (above edit modal) ──────────────── */
+
 #ncm-datepicker-modal,
 #ncm-timepicker-modal {
     z-index: 2000 !important;
@@ -974,15 +1035,6 @@
 .ncm-picker-title {
     font-size: 20px;
     font-weight: 700;
-}
-
-.ncm-btn-icon {
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
-    padding: 8px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
 }
 
 .ncm-picker-weekdays {
@@ -1041,7 +1093,8 @@
     color: #fff;
 }
 
-/* Time Button */
+/* ── Time picker button ──────────────────────────────────────── */
+
 .ncm-time-btn {
     background: rgba(118, 75, 162, 0.2);
     border: 1px solid rgba(118, 75, 162, 0.4);
@@ -1060,7 +1113,8 @@
     background: rgba(118, 75, 162, 0.3);
 }
 
-/* Time Picker Modal */
+/* ── Time picker modal ───────────────────────────────────────── */
+
 .ncm-timepicker {
     max-width: 400px;
     padding: 20px;
@@ -1109,7 +1163,8 @@
     border-color: #667eea;
 }
 
-/* Apple-style Scroll Wheel Time Picker */
+/* ── Scroll-wheel time picker ────────────────────────────────── */
+
 .ncm-scroll-wheels {
     display: flex;
     align-items: center;
@@ -1129,6 +1184,7 @@
     width: 80px;
 }
 
+/* Fade masks hide items above and below the selected row */
 .ncm-scroll-container::before,
 .ncm-scroll-container::after {
     content: "";
@@ -1185,7 +1241,8 @@
     border-radius: 8px;
 }
 
-/* Inline Scroll Wheels for Date/Time */
+/* ── Inline scroll wheels (date/time inside edit form) ───────── */
+
 .ncm-wheel-inline {
     display: flex;
     align-items: center;
@@ -1250,7 +1307,8 @@
     background: rgba(102, 126, 234, 0.4);
 }
 
-/* Date/Time Buttons */
+/* ── Date/time button pair ───────────────────────────────────── */
+
 .ncm-datetime-btns {
     display: flex;
     gap: 10px;
@@ -1294,7 +1352,8 @@
     font-weight: 600;
 }
 
-/* iOS-Style Drum Picker */
+/* ── iOS-style drum picker (above all other modals) ──────────── */
+
 #ncm-drum-modal {
     z-index: 3000 !important;
 }
@@ -1336,6 +1395,7 @@
     width: 65px;
 }
 
+/* Top and bottom fade masks */
 .ncm-drum::before,
 .ncm-drum::after {
     content: "";
@@ -1386,10 +1446,12 @@
     color: rgba(255, 255, 255, 0.6);
 }
 
+/* Padding items used for overscroll feel — not interactive */
 .ncm-drum-pad {
     pointer-events: none;
 }
 
+/* Highlight bar centred on the selected row */
 .ncm-drum-highlight {
     position: absolute;
     left: 10px;
@@ -1415,18 +1477,12 @@
     padding: 0 2px;
 }
 
-/* ========================================
-   iOS-STYLE EDIT MODAL
-   ======================================== */
+/* ── iOS-style edit modal ────────────────────────────────────── */
 
-/* iOS Modal - Made larger */
 .ncm-modal-ios {
     max-width: 650px;
-    /* Larger */
     max-height: 90vh;
-    /* Larger */
     width: 95vw;
-    /* Larger */
     height: auto;
     border-radius: 20px;
     padding: 0;
@@ -1436,22 +1492,18 @@
     overflow: hidden;
 }
 
-/* iOS Header - Larger */
 .ncm-ios-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    /* Mehr Padding */
     background: #1c1c1e;
     flex-shrink: 0;
 }
 
 .ncm-ios-header-btn {
     width: 44px;
-    /* Larger */
     height: 44px;
-    /* Larger */
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.1);
     border: none;
@@ -1463,44 +1515,34 @@
 
 .ncm-ios-header-btn svg {
     width: 24px;
-    /* Larger */
     height: 24px;
-    /* Larger */
-    stroke: #fff;
-}
-
-.ncm-ios-header-btn.ncm-ios-save svg {
     stroke: #fff;
 }
 
 .ncm-ios-header-title {
     font-size: 20px;
-    /* Larger */
     font-weight: 600;
     color: #fff;
 }
 
-/* iOS Tab Toggle (Event/Reminder) */
+/* Tab toggle row (Event / Reminder) */
 .ncm-ios-tabs {
     display: flex;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     padding: 2px;
     margin: 12px 20px;
-    /* Mehr Margin */
     flex-shrink: 0;
 }
 
 .ncm-ios-tab {
     flex: 1;
     padding: 10px 20px;
-    /* Larger */
     border: none;
     border-radius: 6px;
     background: transparent;
     color: rgba(255, 255, 255, 0.6);
     font-size: 15px;
-    /* Larger */
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
@@ -1511,31 +1553,25 @@
     color: #fff;
 }
 
-/* iOS Form Content - Larger */
+/* Scrollable form area */
 .ncm-ios-content {
     flex: 1;
     overflow-y: auto;
-    padding: 0 20px;
-    /* Mehr Padding */
-    padding-bottom: 20px;
+    padding: 0 20px 20px;
 }
 
-/* iOS Grouped Section */
+/* Grouped form section */
 .ncm-ios-section {
     background: #1c1c1e;
     border-radius: 14px;
-    /* Larger */
     margin-bottom: 16px;
-    /* Mehr Margin */
     overflow: hidden;
 }
 
-/* iOS Input Row - Larger, with separator */
+/* Individual row within a section */
 .ncm-ios-row {
-    padding: 20px 20px;
-    /* Grösserer Klickbereich */
+    padding: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    /* Trennlinie wie bei Beginn/Ende */
 }
 
 .ncm-ios-row:last-child {
@@ -1563,11 +1599,10 @@
 
 .ncm-ios-input-sm {
     font-size: 17px;
-    /* Gleiche Grösse wie Beginn/Ende */
     color: rgba(255, 255, 255, 0.6);
 }
 
-/* iOS Toggle Row */
+/* All-day / recurrence toggle row */
 .ncm-ios-toggle-row {
     display: flex;
     align-items: center;
@@ -1585,7 +1620,7 @@
     color: #fff;
 }
 
-/* iOS Toggle Switch */
+/* iOS-style toggle switch */
 .ncm-ios-switch {
     position: relative;
     width: 51px;
@@ -1617,7 +1652,8 @@
     transform: translateX(20px);
 }
 
-/* Recurrence Selector */
+/* ── Recurrence selector buttons ─────────────────────────────── */
+
 .ncm-repeat-select {
     display: flex;
     gap: 6px;
@@ -1647,7 +1683,8 @@
     background: rgba(102, 126, 234, 0.5);
 }
 
-/* iOS Date/Time Row */
+/* ── iOS date/time row ───────────────────────────────────────── */
+
 .ncm-ios-datetime-row {
     display: flex;
     align-items: center;
@@ -1688,7 +1725,8 @@
     color: #ff453a;
 }
 
-/* iOS Calendar Selector */
+/* ── iOS calendar selector row ───────────────────────────────── */
+
 .ncm-ios-cal-row {
     display: flex;
     flex-wrap: wrap;
@@ -1710,27 +1748,15 @@
     border-color: #fff;
 }
 
-/* iOS Keyboard Area - Larger */
+/* ── Keyboard area ───────────────────────────────────────────── */
+
 .ncm-ios-keyboard {
     flex-shrink: 0;
     background: #2c2c2e;
     padding: 12px;
-    /* Mehr Padding */
 }
 
-/* Enhanced Keyboard Keys for Touch - Fast without transitions */
-.ncm-key {
-    -webkit-tap-highlight-color: transparent;
-    user-select: none;
-    /* Keine Transitions für sofortige Reaktion */
-}
-
-.ncm-key:active,
-.ncm-key.ncm-key-pressed {
-    background: rgba(102, 126, 234, 0.7) !important;
-}
-
-/* iOS Save Button (above keyboard) */
+/* Save button above the keyboard */
 .ncm-ios-save-btn {
     margin: 8px 16px;
     padding: 14px;
@@ -1748,9 +1774,7 @@
     opacity: 0.8;
 }
 
-/* ========================================
-   TIME INPUT FIELD
-   ======================================== */
+/* ── Time text input ─────────────────────────────────────────── */
 
 .ncm-ios-time-input {
     width: 65px;
@@ -1772,9 +1796,7 @@
     color: rgba(255, 255, 255, 0.3);
 }
 
-/* ========================================
-   CALENDAR PICKER MODAL
-   ======================================== */
+/* ── Calendar picker modal ───────────────────────────────────── */
 
 .ncm-calpicker-content {
     max-width: 350px;
@@ -1861,68 +1883,8 @@
     margin-top: 16px;
 }
 
-/* ========================================
-   EVENT CLICKABILITY
-   ======================================== */
+/* ── simple-keyboard dark theme ──────────────────────────────── */
 
-.ncm-evt {
-    pointer-events: auto !important;
-    cursor: pointer !important;
-}
-
-/* ========================================
-   DETAIL MODAL - BLACK TEXT ON BADGES
-   ======================================== */
-
-.ncm-detail-badge {
-    color: #000 !important;
-}
-
-/* ========================================
-   CRITICAL: CLICK HANDLER FIX
-   Ensures ALL clickable elements work
-   ======================================== */
-
-/* Day numbers must be clickable */
-.ncm-day-num {
-    pointer-events: auto !important;
-    cursor: pointer !important;
-    -webkit-tap-highlight-color: transparent;
-}
-
-/* Today's day number styling shouldn't block clicks */
-.ncm-day-today .ncm-day-num {
-    pointer-events: auto !important;
-    cursor: pointer !important;
-}
-
-/* Event container must allow pointer events through */
-.ncm-day-events {
-    pointer-events: auto !important;
-}
-
-/* ALL event types must be clickable */
-.ncm-evt,
-.ncm-multiday-bar {
-    pointer-events: auto !important;
-    cursor: pointer !important;
-    -webkit-tap-highlight-color: transparent;
-}
-
-/* More button must be clickable */
-.ncm-more {
-    pointer-events: auto !important;
-    cursor: pointer !important;
-}
-
-/* Ensure the day container doesn't block events */
-.ncm-day {
-    pointer-events: auto !important;
-}
-
-/* ================================================
-   SIMPLE-KEYBOARD DARK THEME
-   ================================================ */
 .ncm-simple-keyboard {
     background: #2c2c2e !important;
     padding: 8px 4px !important;
@@ -1963,7 +1925,7 @@
     margin-bottom: 0 !important;
 }
 
-/* Special keys */
+/* Special keys (shift, backspace, enter, layout toggles) */
 .ncm-simple-keyboard .ncm-sk-special {
     background: rgba(255, 255, 255, 0.22) !important;
     font-size: 18px !important;
@@ -1972,14 +1934,13 @@
     min-width: 70px !important;
 }
 
-/* Enter key - larger */
 .ncm-simple-keyboard .hg-button[data-skbtn="{enter}"] {
     background: rgba(102, 126, 234, 0.6) !important;
     flex-grow: 2 !important;
     min-width: 80px !important;
 }
 
-/* Shift key - blue when active */
+/* Shift key highlighted when active */
 .ncm-simple-keyboard .hg-button[data-skbtn="{shift}"]:active,
 .ncm-simple-keyboard.shift-active .hg-button[data-skbtn="{shift}"],
 .ncm-simple-keyboard .shift-active-btn {
@@ -1987,7 +1948,7 @@
     color: #fff !important;
 }
 
-/* Space bar - significantly larger as in image */
+/* Space bar wider than regular keys */
 .ncm-simple-keyboard .ncm-sk-space {
     flex-grow: 6 !important;
     width: auto !important;
@@ -1995,7 +1956,6 @@
     font-size: 18px !important;
 }
 
-/* 123 key same size as Enter */
 .ncm-simple-keyboard .hg-button[data-skbtn="{numbers}"],
 .ncm-simple-keyboard .hg-button[data-skbtn="{abc}"],
 .ncm-simple-keyboard .hg-button[data-skbtn="{symbols}"] {
@@ -2014,32 +1974,6 @@
     min-width: 70px !important;
 }
 
-/* Container */
 .simple-keyboard-container {
     width: 100%;
-}
-
-/* Repeat Icon on recurring events */
-.ncm-evt-repeat-icon {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 4px;
-    vertical-align: middle;
-    opacity: 0.7;
-}
-
-.ncm-evt-repeat-icon svg {
-    width: 10px;
-    height: 10px;
-    stroke: rgba(255, 255, 255, 0.8);
-    stroke-width: 2.5;
-}
-
-/* Detail modal repeat icon */
-.ncm-row svg {
-    width: 14px;
-    height: 14px;
-    vertical-align: middle;
-    display: inline;
-    margin-right: 4px;
 }

@@ -1,7 +1,7 @@
- Module.register("MMM-Nextcloud-Calendar", { // eslint-disable-line no-unused-vars TEST
+ Module.register("MMM-Nextcloud-Calendar", { // eslint-disable-line no-unused-vars
     defaults: {
-        calendars: [], //Test
-        refreshInterval: 1 * 60 * 1000, // 1 minute - custom server
+        calendars: [],
+        refreshInterval: 1 * 60 * 1000, // 1 minute
     },
 
     events: [],
@@ -12,15 +12,11 @@
     editEndDate: null,
     shiftActive: false,
     activeInputField: null,
-    activeFilters: [], // Calendar filters: active calendars are displayed
-    suggestionsTimer: null, // Debounce timer for suggestions
-    holidaysCache: {}, // Cache for calculated holidays per year
+    activeFilters: [],
+    suggestionsTimer: null,
+    holidaysCache: {},
 
-    /**
-     * Calculates the exact date of Easter for a given year using the Gauss algorithm.
-     * @param {number} year - The year to calculate Easter for.
-     * @returns {Date} The Easter date.
-     */
+    // Calculates Easter Sunday for a given year using the Gauss algorithm.
     calculateEaster: function (year) {
         const a = year % 19;
         const b = Math.floor(year / 100);
@@ -34,16 +30,12 @@
         const k = c % 4;
         const l = (32 + 2 * e + 2 * i - h - k) % 7;
         const m = Math.floor((a + 11 * h + 22 * l) / 451);
-        const month = Math.floor((h + l - 7 * m + 114) / 31) - 1; // 0-indexed
+        const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
         const day = ((h + l - 7 * m + 114) % 31) + 1;
         return new Date(year, month, day);
     },
 
-    /**
-     * Retrieves all public Swiss holidays for a specific year, relying on the internal cache if possible.
-     * @param {number} year - The target year for holiday retrieval.
-     * @returns {Object[]} An array comprising date objects and their respective holiday names.
-     */
+    // Returns Swiss public holidays for the given year, using the cache when available.
     getSwissHolidays: function (year) {
         if (this.holidaysCache[year]) {
             return this.holidaysCache[year];
@@ -52,7 +44,7 @@
         const easter = this.calculateEaster(year);
         const holidays = [];
 
-        // Fixed holidays
+        // Fixed-date holidays
         holidays.push({ date: new Date(year, 0, 1), name: "Neujahr" });
         holidays.push({ date: new Date(year, 0, 2), name: "Berchtoldstag" });
         holidays.push({ date: new Date(year, 4, 1), name: "Tag der Arbeit" });
@@ -60,7 +52,7 @@
         holidays.push({ date: new Date(year, 11, 25), name: "Weihnachten" });
         holidays.push({ date: new Date(year, 11, 26), name: "Stephanstag" });
 
-        // Easter-based holidays
+        // Easter-relative holidays
         const easterTime = easter.getTime();
         holidays.push({ date: new Date(easterTime - 2 * 86400000), name: "Karfreitag" });
         holidays.push({ date: new Date(easterTime + 1 * 86400000), name: "Ostermontag" });
@@ -71,13 +63,7 @@
         return holidays;
     },
 
-    /**
-     * Checks if a specified day conforms to any known Swiss holiday.
-     * @param {number} y - Full year.
-     * @param {number} m - Zero-based month.
-     * @param {number} d - Date of the month.
-     * @returns {Object[]} The list of matched holidays filtering down exactly to that day.
-     */
+    // Returns holidays that fall on a specific day.
     getHolidaysForDay: function (y, m, d) {
         const holidays = this.getSwissHolidays(y);
         return holidays.filter(h => {
@@ -93,7 +79,7 @@
         this.selectedMonth = { year: now.getFullYear(), month: now.getMonth() };
         if (this.config.calendars.length > 0) {
             this.selectedCalendar = this.config.calendars[0];
-            // All calendars active by default
+            // All calendars visible by default
             this.activeFilters = this.config.calendars.map(cal => cal.name);
         }
         this.loadEvents();
@@ -124,7 +110,7 @@
     socketNotificationReceived: function (notification, payload) {
         if (notification === "EVENTS_RESULT" && payload.success) {
             this.events = payload.events;
-            // Only update grid when no modal is open
+            // Skip DOM update while the edit modal is open
             const editModalOpen = !document.getElementById("ncm-edit-modal")?.classList.contains("ncm-hidden");
             if (!editModalOpen) {
                 this.updateDom();
@@ -147,9 +133,9 @@
     getDom: function () {
         const w = document.createElement("div");
         w.className = "ncm-container";
-        w.appendChild(this.createLegend()); // Legend with plus button
-        w.appendChild(this.createCalendarGrid()); // Calendar grid
-        w.appendChild(this.createHeader()); // Bottom centered navigation
+        w.appendChild(this.createLegend());
+        w.appendChild(this.createCalendarGrid());
+        w.appendChild(this.createHeader());
         w.appendChild(this.createDayModal());
         w.appendChild(this.createDetailModal());
         w.appendChild(this.createEditModal());
@@ -159,6 +145,7 @@
         return w;
     },
 
+    // Returns an SVG icon string by name.
     icon: function (n) {
         const i = {
             left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>',
@@ -177,7 +164,7 @@
         return i[n] || "";
     },
 
-    // Plus button top right
+    // Creates the "new event" button in the top-right corner.
     createAddButton: function () {
         const container = document.createElement("div");
         container.className = "ncm-add-container";
@@ -192,7 +179,7 @@
         return container;
     },
 
-    // Centered month navigation
+    // Creates the month navigation bar (prev/next arrows + month label).
     createHeader: function () {
         const h = document.createElement("div");
         h.className = "ncm-header";
@@ -219,6 +206,7 @@
         return h;
     },
 
+    // Builds the full monthly calendar grid with events assigned to slots.
     createCalendarGrid: function () {
         const self = this;
         const g = document.createElement("div");
@@ -246,18 +234,17 @@
         let dow = first.getDay() - 1;
         if (dow < 0) dow = 6;
 
-        // ── Build cell date list ─────────────────────────────────────────────
+        // Build the flat list of cell dates (null = padding cell from prev/next month)
         const cellDates = [];
         for (let i = dow - 1; i >= 0; i--) cellDates.push(null);
         for (let d = 1; d <= last.getDate(); d++) cellDates.push(new Date(year, month, d));
         const rem = (7 - ((dow + last.getDate()) % 7)) % 7;
         for (let i = 0; i < rem; i++) cellDates.push(null);
 
-        // ── Unified Event Constants ──────────────────────────────────────────
-        const MAX_DISPLAY_EVENTS = 2;   // Max events shown per cell (multi or single)
+        const MAX_DISPLAY_EVENTS = 2;
         const CELL_PAD     = 5;
 
-        // ── Helpers ──────────────────────────────────────────────────────────
+        // Returns the normalised end date for an event (all-day end is exclusive, so subtract 1 day)
         const normEnd = ev => {
             let e = new Date(ev.end);
             if (ev.isAllDay) e = new Date(e.getTime() - 86400000);
@@ -269,26 +256,25 @@
             return normEnd(ev).getTime() > s.getTime();
         };
 
-        // ── Unified Slot Assignment Pass ─────────────────────────────────────
         const allEvents = (this.events || []).filter(e => this.activeFilters.includes(e.calendarName));
 
-        // Sort events: Multi-day first (by duration DESC, then start ASC), then Single-day (by start ASC)
+        // Multi-day events first (longest first), then single-day by start time
         const sortedEvents = [...allEvents].sort((a, b) => {
             const aMulti = isMultiDayEv(a);
             const bMulti = isMultiDayEv(b);
             if (aMulti && !bMulti) return -1;
             if (!aMulti && bMulti) return 1;
-            
+
             if (aMulti && bMulti) {
                 const aDuration = normEnd(a).getTime() - new Date(a.start).setHours(0,0,0,0);
                 const bDuration = normEnd(b).getTime() - new Date(b.start).setHours(0,0,0,0);
                 if (bDuration !== aDuration) return bDuration - aDuration;
             }
-            
+
             return new Date(a.start).getTime() - new Date(b.start).getTime();
         });
 
-        // slotAssign[cellIdx][slot] = event | null
+        // Assign each event to the lowest free slot across all cells it occupies
         const slotAssign = cellDates.map(() => []);
 
         sortedEvents.forEach(ev => {
@@ -303,7 +289,6 @@
             });
             if (!covered.length) return;
 
-            // Find lowest available slot that is free across all covered days
             let slot = 0;
             while (true) {
                 const isFree = covered.every(idx => !slotAssign[idx][slot]);
@@ -315,7 +300,6 @@
             });
         });
 
-        // ── Build cells ───────────────────────────────────────────────────────
         const prevMonthDay = new Date(year, month, 0).getDate();
 
         cellDates.forEach((date, idx) => {
@@ -329,11 +313,9 @@
             }
             const isToday = date && date.getTime() === today.getTime();
 
-            // ── Cell element ────────────────────────────────────────────────
             const cell = document.createElement("div");
             cell.className = "ncm-day" + (isOther ? " ncm-day-other" : "") + (isToday ? " ncm-day-today" : "");
 
-            // ── Day number ──────────────────────────────────────────────────
             const num = document.createElement("div");
             num.className = "ncm-day-num";
             num.textContent = dayNum;
@@ -348,9 +330,8 @@
 
             if (isOther || !date) { grid.appendChild(cell); return; }
 
-            // ── Unified Event Rendering ──────────────────────────────────────
             const slots = slotAssign[idx] || [];
-            
+
             const evCont = document.createElement("div");
             evCont.className = "ncm-day-events";
             evCont.style.display = "flex";
@@ -367,7 +348,7 @@
                     const hasHigher = slots.slice(slot + 1, MAX_DISPLAY_EVENTS).some(e => e);
                     if (hasHigher) {
                         const spacer = document.createElement("div");
-                        spacer.style.height = "18px"; 
+                        spacer.style.height = "18px";
                         evCont.appendChild(spacer);
                         renderedCount++;
                     }
@@ -397,7 +378,7 @@
 
                     const barWrapper = document.createElement("div");
                     barWrapper.className = "ncm-slot-row";
-                    
+
                     let mLeft = 0;
                     let pLeft = "";
                     if (!isActualStart) {
@@ -411,8 +392,8 @@
                         mRight = isLastInRow ? -CELL_PAD : -(CELL_PAD + 2);
                         pRight = "0px";
                     }
-                    
-                    barWrapper.style.margin = `0 ${mRight}px 0 ${mLeft}px`; 
+
+                    barWrapper.style.margin = `0 ${mRight}px 0 ${mLeft}px`;
                     barWrapper.style.height = "18px";
 
                     const bar = document.createElement("div");
@@ -500,7 +481,7 @@
                 cell.appendChild(evCont);
             }
 
-            // ── Holidays (after slots & events so they don't shift bar position) ─
+            // Append holidays below event bars so they don't affect slot positions
             const holidays = this.getHolidaysForDay(date.getFullYear(), date.getMonth(), date.getDate());
             if (holidays.length) {
                 const hCont = document.createElement("div");
@@ -521,8 +502,8 @@
         return g;
     },
 
+    // Legacy cell builder kept for compatibility - grid is now built inline.
     createDayCell: function (day, isOther, isToday = false, date = null) {
-        // Kept for compatibility but grid building is now fully inline above.
         const self = this;
         const c = document.createElement("div");
         c.className = "ncm-day" + (isOther ? " ncm-day-other" : "") + (isToday ? " ncm-day-today" : "");
@@ -540,17 +521,16 @@
         return c;
     },
 
+    // Builds the legend row with calendar color dots and a "New" button on the right.
     createLegend: function () {
         const self = this;
-        // Wrapper für Legende + Plus-Button (space-between)
         const wrapper = document.createElement("div");
         wrapper.className = "ncm-legend-wrapper";
 
-        // "Heute"-Button - nur sichtbar wenn nicht im aktuellen Monat
+        // Show "Today" button only when viewing a month other than the current one
         const now = new Date();
         const isCurrentMonth = this.selectedMonth.year === now.getFullYear() && this.selectedMonth.month === now.getMonth();
         if (!isCurrentMonth) {
-            // Pfeilrichtung: zeigt in Richtung des aktuellen Monats
             const currentBefore = (now.getFullYear() * 12 + now.getMonth()) < (this.selectedMonth.year * 12 + this.selectedMonth.month);
             const arrow = currentBefore ? this.icon("left") : this.icon("right");
 
@@ -565,7 +545,6 @@
             wrapper.appendChild(todayBtn);
         }
 
-        // Legende-Items Container (links)
         const leg = document.createElement("div");
         leg.className = "ncm-legend";
 
@@ -581,7 +560,6 @@
             const name = document.createElement("span");
             name.textContent = cal.name;
 
-            // Click-Handler für Filter-Toggle
             item.addEventListener("click", function () {
                 self.toggleCalendarFilter(cal.name);
             });
@@ -590,7 +568,6 @@
             leg.appendChild(item);
         });
 
-        // Plus-Button (ganz rechts)
         const newBtn = document.createElement("button");
         newBtn.className = "ncm-btn ncm-btn-icon";
         newBtn.innerHTML = this.icon("plus");
@@ -603,7 +580,7 @@
         return wrapper;
     },
 
-    // RRULE → menschenlesbare Bezeichnung
+    // Returns a human-readable label for an RRULE recurrence frequency.
     getRecurrenceLabel: function (rrule) {
         if (!rrule) return "Serie";
         if (rrule.includes("FREQ=DAILY")) return "Täglich";
@@ -613,7 +590,7 @@
         return "Serie";
     },
 
-    // RRULE → FREQ value für Repeat-Selector
+    // Returns the FREQ value from an RRULE string (e.g. "WEEKLY").
     getRecurrenceFreq: function (rrule) {
         if (!rrule) return "";
         if (rrule.includes("FREQ=DAILY")) return "DAILY";
@@ -623,24 +600,22 @@
         return "";
     },
 
+    // Toggles a calendar in/out of the active filter list and re-renders.
     toggleCalendarFilter: function (calendarName) {
         const index = this.activeFilters.indexOf(calendarName);
         if (index > -1) {
-            // Kalender ist aktiv -> deaktivieren
             this.activeFilters.splice(index, 1);
         } else {
-            // Kalender ist inaktiv -> aktivieren
             this.activeFilters.push(calendarName);
         }
-        // UI aktualisieren
         this.updateDom();
     },
 
+    // Returns events that overlap a given day, respecting active calendar filters.
     getEventsForDay: function (y, m, d) {
         const ds = new Date(y, m, d, 0, 0, 0);
         const de = new Date(y, m, d, 23, 59, 59);
         return this.events.filter(e => {
-            // Filter nach aktiven Kalendern
             if (!this.activeFilters.includes(e.calendarName)) {
                 return false;
             }
@@ -648,11 +623,9 @@
             const start = new Date(e.start);
             let end = new Date(e.end);
 
-            // Fix for all-day events: iCalendar DTEND is exclusive
-            // So a 1-day event on Jan 14 has DTEND=Jan 15
-            // We need to subtract 1 day for proper display
+            // iCalendar DTEND is exclusive for all-day events, subtract 1 day for display
             if (e.isAllDay) {
-                end = new Date(end.getTime() - 86400000); // -1 day
+                end = new Date(end.getTime() - 86400000);
             }
 
             return start <= de && end >= ds;
@@ -667,7 +640,7 @@
         this.updateDom();
     },
 
-    // Day Modal
+    // Creates the day-detail modal (lists all events for a tapped day).
     createDayModal: function () {
         const m = document.createElement("div");
         m.className = "ncm-modal ncm-hidden";
@@ -723,7 +696,7 @@
         mod.classList.remove("ncm-hidden");
     },
 
-    // Detail Modal
+    // Creates the event detail modal (read-only view with edit/delete actions).
     createDetailModal: function () {
         const m = document.createElement("div");
         m.className = "ncm-modal ncm-hidden";
@@ -764,6 +737,7 @@
         return m;
     },
 
+    // Escapes HTML special characters to prevent XSS in innerHTML assignments.
     escapeHtml: function (str) {
         return String(str)
             .replace(/&/g, "&amp;")
@@ -784,7 +758,6 @@
         if (ev.location) html += `<div class="ncm-row"><span class="ncm-lbl">Ort</span><span>${esc(ev.location)}</span></div>`;
         if (ev.attendees?.length) html += `<div class="ncm-row"><span class="ncm-lbl">Personen</span><span>${esc(ev.attendees.join(", "))}</span></div>`;
         if (ev.description) html += `<div class="ncm-row"><span class="ncm-lbl">Notizen</span><span class="ncm-notes">${esc(ev.description)}</span></div>`;
-        // Wiederholen-Info anzeigen
         if (ev.isRecurring) {
             const recLabel = self.getRecurrenceLabel(ev.rrule);
             html += `<div class="ncm-row"><span class="ncm-lbl">Wiederholen</span><span>${self.icon("repeat")} ${esc(recLabel)}</span></div>`;
@@ -807,10 +780,8 @@
         };
         document.getElementById("ncm-detail-delete").onclick = () => {
             if (ev.isRecurring) {
-                // Wiederkehrender Termin: Auswahl anbieten
                 this.showRecurringChoice("Wiederkehrenden Termin löschen?", "delete", (choice) => {
                     if (choice === "all") {
-                        // Ganze Serie löschen (die .ics Datei löschen)
                         this.showLoading("Termin wird gelöscht…");
                         this.sendSocketNotification("DELETE_EVENT", { href: ev.href, user: ev.calendarUser, pass: ev.calendarPass });
                     }
@@ -825,7 +796,7 @@
         mod.classList.remove("ncm-hidden");
     },
 
-    // Edit Modal - iOS Style Layout
+    // Creates the iOS-style event edit modal with all input sections.
     createEditModal: function () {
         const m = document.createElement("div");
         m.className = "ncm-modal ncm-hidden";
@@ -834,7 +805,7 @@
         const c = document.createElement("div");
         c.className = "ncm-modal-content ncm-modal-ios";
 
-        // === iOS HEADER ===
+        // Header with close and save buttons
         const header = document.createElement("div");
         header.className = "ncm-ios-header";
 
@@ -855,11 +826,10 @@
 
         header.append(closeBtn, title, saveBtn);
 
-        // === SCROLLABLE CONTENT ===
         const content = document.createElement("div");
         content.className = "ncm-ios-content";
 
-        // --- Section 1: Calendar Selector (ERSTE SEKTION!) ---
+        // Section 1: Calendar selector
         const sec1 = document.createElement("div");
         sec1.className = "ncm-ios-section";
         const calRow = document.createElement("div");
@@ -867,7 +837,7 @@
         calRow.id = "ncm-cal-sel";
         sec1.appendChild(calRow);
 
-        // --- Section 2: Title & Location ---
+        // Section 2: Title and location inputs
         const sec2 = document.createElement("div");
         sec2.className = "ncm-ios-section";
 
@@ -911,11 +881,10 @@
 
         sec2.append(titleRow, locRow);
 
-        // --- Section 3: Date/Time ---
+        // Section 3: Date, time, and recurrence
         const sec3 = document.createElement("div");
         sec3.className = "ncm-ios-section";
 
-        // All-day toggle
         const allDayRow = document.createElement("div");
         allDayRow.className = "ncm-ios-toggle-row";
         const allDayLabel = document.createElement("span");
@@ -930,13 +899,12 @@
         });
         allDayRow.append(allDayLabel, allDaySwitch);
 
-        // Hidden checkbox for compatibility
+        // Hidden checkbox for backward compatibility
         const allDayCheck = document.createElement("input");
         allDayCheck.type = "checkbox";
         allDayCheck.id = "ncm-edit-allday";
         allDayCheck.style.display = "none";
 
-        // Start row - Date picker button + Time input
         const startRow = document.createElement("div");
         startRow.className = "ncm-ios-datetime-row";
         const startLabel = document.createElement("span");
@@ -956,14 +924,14 @@
         startTimeInput.placeholder = "HH:MM";
         startTimeInput.maxLength = 5;
         startTimeInput.spellcheck = false;
-        startTimeInput.inputMode = "numeric"; // Zeigt Ziffern-Tastatur auf Mobilgeräten
+        startTimeInput.inputMode = "numeric";
         startTimeInput.addEventListener("focus", () => {
             this.setActiveInput(startTimeInput);
             this.showKeyboard("time");
             this.timeInputFirstKey = true;
         });
         startTimeInput.addEventListener("blur", () => this.validateTimeInput("start"));
-        // Nur Zahlen und : erlauben
+        // Allow only digits, colon, and navigation keys
         startTimeInput.addEventListener("keydown", (e) => {
             const allowed = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", "Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
             if (!allowed.includes(e.key)) {
@@ -973,7 +941,6 @@
         startValues.append(startDateBtn, startTimeInput);
         startRow.append(startLabel, startValues);
 
-        // End row - Date picker button + Time input
         const endRow = document.createElement("div");
         endRow.className = "ncm-ios-datetime-row";
         const endLabel = document.createElement("span");
@@ -993,14 +960,13 @@
         endTimeInput.placeholder = "HH:MM";
         endTimeInput.maxLength = 5;
         endTimeInput.spellcheck = false;
-        endTimeInput.inputMode = "numeric"; // Zeigt Ziffern-Tastatur auf Mobilgeräten
+        endTimeInput.inputMode = "numeric";
         endTimeInput.addEventListener("focus", () => {
             this.setActiveInput(endTimeInput);
             this.showKeyboard("time");
             this.timeInputFirstKey = true;
         });
         endTimeInput.addEventListener("blur", () => this.validateTimeInput("end"));
-        // Nur Zahlen und : erlauben
         endTimeInput.addEventListener("keydown", (e) => {
             const allowed = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", "Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"];
             if (!allowed.includes(e.key)) {
@@ -1010,7 +976,6 @@
         endValues.append(endDateBtn, endTimeInput);
         endRow.append(endLabel, endValues);
 
-        // Wiederholen-Auswahl (Recurrence)
         const repeatRow = document.createElement("div");
         repeatRow.className = "ncm-ios-toggle-row";
         const repeatLabel = document.createElement("span");
@@ -1036,7 +1001,6 @@
             btn.textContent = opt.label;
             btn.dataset.value = opt.value;
             btn.addEventListener("click", () => {
-                // Alle Buttons deaktivieren, diesen aktivieren
                 repeatSelect.querySelectorAll(".ncm-repeat-btn").forEach(b => b.classList.remove("active"));
                 btn.classList.add("active");
             });
@@ -1047,7 +1011,7 @@
 
         sec3.append(allDayRow, allDayCheck, startRow, endRow, repeatRow);
 
-        // --- Section 4: Notes ---
+        // Section 4: Notes textarea
         const sec4 = document.createElement("div");
         sec4.className = "ncm-ios-section";
         const notesRow = document.createElement("div");
@@ -1066,7 +1030,7 @@
         notesRow.appendChild(notesInput);
         sec4.appendChild(notesRow);
 
-        // Hidden attendees field (for compatibility)
+        // Hidden attendees field for future use
         const attInput = document.createElement("input");
         attInput.type = "hidden";
         attInput.id = "ncm-edit-att";
@@ -1074,12 +1038,10 @@
 
         content.append(sec1, sec2, sec3, sec4, attInput);
 
-        // === SUGGESTIONS BAR ===
         const suggestBar = document.createElement("div");
         suggestBar.className = "ncm-suggestions-bar";
         suggestBar.id = "ncm-suggestions";
 
-        // === KEYBOARD AREA ===
         const kbArea = document.createElement("div");
         kbArea.className = "ncm-ios-keyboard";
         kbArea.id = "ncm-keyboard-area";
@@ -1090,8 +1052,8 @@
         return m;
     },
 
+    // Syncs the iOS switch state to the hidden checkbox and updates date/time fields.
     updateDateTimeInputs: function () {
-        // Sync iOS switch with hidden checkbox
         const allDaySwitch = document.getElementById("ncm-allday-switch");
         const allDayCheckbox = document.getElementById("ncm-edit-allday");
         const allDay = allDaySwitch?.classList.contains("active") || false;
@@ -1136,38 +1098,34 @@
         }
     },
 
+    // Validates and normalises a time input field (HH:MM or HH format).
     validateTimeInput: function (type) {
         const input = document.getElementById(`ncm-${type}-time-input`);
         if (!input) return;
 
         let value = input.value.trim();
-
-        // Leere Eingabe ignorieren
         if (!value) return;
 
-        // Verschiedene Formate erkennen
         let hour, minute;
 
-        // Format: HH:MM
         let match = value.match(/^(\d{1,2}):(\d{1,2})$/);
         if (match) {
             hour = parseInt(match[1], 10);
             minute = parseInt(match[2], 10);
         } else {
-            // Format: nur Stunden (z.B. "17" -> "17:00")
+            // Accept bare hour number, e.g. "17" → "17:00"
             match = value.match(/^(\d{1,2})$/);
             if (match) {
                 hour = parseInt(match[1], 10);
                 minute = 0;
             } else {
-                // Ungültiges Format - zurücksetzen
+                // Reset to current value on invalid input
                 const date = type === "start" ? this.editStartDate : this.editEndDate;
                 input.value = `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
                 return;
             }
         }
 
-        // Werte begrenzen
         if (hour > 23) hour = 23;
         if (hour < 0) hour = 0;
         if (minute > 59) minute = 59;
@@ -1176,16 +1134,14 @@
         const date = type === "start" ? this.editStartDate : this.editEndDate;
         date.setHours(hour, minute, 0, 0);
 
-        // Schön formatieren
         input.value = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 
-        // Ende darf nicht vor Start sein
+        // Auto-advance end if it would be before start
         if (this.editEndDate <= this.editStartDate) {
             this.editEndDate = new Date(this.editStartDate.getTime() + 3600000);
             this.updateDateTimeInputs();
         }
 
-        // Zurück zur normalen Tastatur
         this.showKeyboard("text");
     },
 
@@ -1196,6 +1152,7 @@
         document.getElementById("ncm-calpicker-modal").classList.remove("ncm-hidden");
     },
 
+    // Renders (or re-renders) the inline calendar picker modal.
     renderCalendarPickerModal: function () {
         let modal = document.getElementById("ncm-calpicker-modal");
         if (!modal) {
@@ -1225,20 +1182,18 @@
             </div>
         `;
 
-        // Build calendar grid
         const grid = modal.querySelector("#ncm-calpicker-grid");
         const firstDay = new Date(y, m, 1);
         const lastDay = new Date(y, m + 1, 0);
-        let startWeekday = firstDay.getDay() || 7; // Monday = 1
+        let startWeekday = firstDay.getDay() || 7;
 
-        // Previous month padding
+        // Fill leading empty cells for days before the 1st
         for (let i = 1; i < startWeekday; i++) {
             const empty = document.createElement("div");
             empty.className = "ncm-calpicker-day ncm-calpicker-empty";
             grid.appendChild(empty);
         }
 
-        // Days of month
         const selectedDate = this.calendarPickerType === "start" ? this.editStartDate : this.editEndDate;
         const today = new Date();
 
@@ -1261,7 +1216,6 @@
             grid.appendChild(btn);
         }
 
-        // Event listeners
         modal.querySelector("#ncm-calpicker-prev").addEventListener("click", () => {
             this.calendarPickerDate.setMonth(this.calendarPickerDate.getMonth() - 1);
             this.renderCalendarPickerModal();
@@ -1283,7 +1237,7 @@
         date.setMonth(m);
         date.setDate(day);
 
-        // Validate: end cannot be before start
+        // Ensure end is never before start
         if (this.editEndDate < this.editStartDate) {
             this.editEndDate = new Date(this.editStartDate);
             this.editEndDate.setHours(this.editStartDate.getHours() + 1);
@@ -1293,6 +1247,7 @@
         document.getElementById("ncm-calpicker-modal").classList.add("ncm-hidden");
     },
 
+    // Opens the edit modal, pre-filling fields when editing an existing event.
     openEditModal: function (ev = null) {
         this.editingEvent = ev;
         const tit = document.getElementById("ncm-edit-title");
@@ -1327,24 +1282,21 @@
             this.selectedCalendar = this.config.calendars[0];
         }
 
-        // Wiederholen setzen: bei bestehenden Events die richtige Wiederholung anzeigen
+        // Set recurrence selector to match the event's RRULE (or "None")
         const repeatSel = document.getElementById("ncm-repeat-select");
         if (repeatSel) {
             repeatSel.querySelectorAll(".ncm-repeat-btn").forEach(b => b.classList.remove("active"));
 
             if (ev && ev.isRecurring && ev.rrule) {
-                // Richtige Wiederholung aus RRULE lesen
                 const freq = this.getRecurrenceFreq(ev.rrule);
                 const activeBtn = repeatSel.querySelector(`.ncm-repeat-btn[data-value="${freq}"]`);
                 if (activeBtn) {
                     activeBtn.classList.add("active");
                 } else {
-                    // Fallback: "Nie"
                     const nieBtn = repeatSel.querySelector('.ncm-repeat-btn[data-value=""]');
                     if (nieBtn) nieBtn.classList.add("active");
                 }
             } else {
-                // Standard: "Nie"
                 const nieBtn = repeatSel.querySelector('.ncm-repeat-btn[data-value=""]');
                 if (nieBtn) nieBtn.classList.add("active");
             }
@@ -1356,6 +1308,7 @@
         titIn.focus();
     },
 
+    // Opens the edit modal pre-set to a specific date (from day modal).
     openEditModalForDate: function (date) {
         this.editingEvent = null;
         const start = new Date(date);
@@ -1373,7 +1326,6 @@
         document.getElementById("ncm-edit-loc").value = "";
         document.getElementById("ncm-edit-notes").value = "";
 
-        // Wiederholen zurücksetzen
         const repeatSel2 = document.getElementById("ncm-repeat-select");
         if (repeatSel2) {
             repeatSel2.querySelectorAll(".ncm-repeat-btn").forEach(b => b.classList.remove("active"));
@@ -1386,6 +1338,7 @@
         document.getElementById("ncm-edit-modal").classList.remove("ncm-hidden");
     },
 
+    // Re-renders the calendar selection buttons, highlighting the currently selected one.
     renderCalSelector: function () {
         const cont = document.getElementById("ncm-cal-sel");
         cont.innerHTML = "";
@@ -1394,12 +1347,11 @@
             btn.className = "ncm-ios-cal-btn" + (this.selectedCalendar?.name === cal.name ? " selected" : "");
             btn.style.backgroundColor = cal.color;
             btn.textContent = cal.name;
-            btn.addEventListener("mousedown", e => e.preventDefault()); // Verhindert Fokus-Verlust
+            btn.addEventListener("mousedown", e => e.preventDefault());
             btn.addEventListener("click", () => {
                 this.selectedCalendar = cal;
                 this.renderCalSelector();
-                this.updateSuggestions(); // Vorschläge aktualisieren
-                // Fokus im aktiven Feld behalten
+                this.updateSuggestions();
                 if (this.activeInputField) {
                     this.activeInputField.focus();
                 }
@@ -1408,6 +1360,7 @@
         });
     },
 
+    // Re-renders the start/end scroll wheels inside the date container.
     updateWheels: function () {
         const cont = document.getElementById("ncm-date-container");
         const allDay = document.getElementById("ncm-edit-allday").checked;
@@ -1426,53 +1379,45 @@
         cont.appendChild(endW);
     },
 
+    // Builds a date (and optionally time) scroll-wheel row for start or end.
     createWheel: function (type, allDay) {
         const w = document.createElement("div");
         w.className = "ncm-wheel-inline";
 
         const d = type === "start" ? this.editStartDate : this.editEndDate;
 
-        // Day scroll wheel
         const dayWheel = this.createInlineScrollWheel(type, "day", 31, d.getDate(), 1);
         w.appendChild(dayWheel);
 
-        // Dot separator
         const dot1 = document.createElement("span");
         dot1.className = "ncm-wheel-dot";
         dot1.textContent = ".";
         w.appendChild(dot1);
 
-        // Month scroll wheel  
         const monthWheel = this.createInlineScrollWheel(type, "month", 12, d.getMonth() + 1, 1);
         w.appendChild(monthWheel);
 
-        // Dot separator
         const dot2 = document.createElement("span");
         dot2.className = "ncm-wheel-dot";
         dot2.textContent = ".";
         w.appendChild(dot2);
 
-        // Year scroll wheel (current year ± 2)
         const yearWheel = this.createYearScrollWheel(type, d.getFullYear());
         w.appendChild(yearWheel);
 
         if (!allDay) {
-            // Space separator
             const space = document.createElement("span");
             space.className = "ncm-wheel-space";
             w.appendChild(space);
 
-            // Hour scroll wheel
             const hourWheel = this.createInlineScrollWheel(type, "hour", 24, d.getHours(), 0);
             w.appendChild(hourWheel);
 
-            // Colon
             const colon = document.createElement("span");
             colon.className = "ncm-wheel-colon";
             colon.textContent = ":";
             w.appendChild(colon);
 
-            // Minute scroll wheel
             const minWheel = this.createInlineScrollWheel(type, "minute", 60, d.getMinutes(), 0);
             w.appendChild(minWheel);
         }
@@ -1480,6 +1425,7 @@
         return w;
     },
 
+    // Creates a scrollable column for a numeric date/time unit.
     createInlineScrollWheel: function (type, unit, max, current, startFrom) {
         const container = document.createElement("div");
         container.className = "ncm-inline-scroll";
@@ -1501,7 +1447,7 @@
 
         container.appendChild(list);
 
-        // Scroll to selected after render
+        // Scroll to the selected item after render
         setTimeout(() => {
             const sel = list.querySelector(".ncm-inline-sel");
             if (sel) list.scrollTop = sel.offsetTop - list.offsetHeight / 2 + sel.offsetHeight / 2;
@@ -1510,6 +1456,7 @@
         return container;
     },
 
+    // Creates a year scroll wheel spanning from currentYear-2 to currentYear+5.
     createYearScrollWheel: function (type, currentYear) {
         const container = document.createElement("div");
         container.className = "ncm-inline-scroll ncm-inline-year";
@@ -1539,6 +1486,7 @@
         return container;
     },
 
+    // Updates the date object when a scroll-wheel item is clicked and auto-adjusts if needed.
     selectInlineValue: function (type, unit, value) {
         const d = type === "start" ? this.editStartDate : this.editEndDate;
 
@@ -1548,7 +1496,6 @@
         else if (unit === "hour") d.setHours(value);
         else if (unit === "minute") d.setMinutes(value);
 
-        // Auto-adjust end if needed
         if (type === "start" && this.editStartDate >= this.editEndDate) {
             this.editEndDate = new Date(this.editStartDate.getTime() + 3600000);
         }
@@ -1559,6 +1506,7 @@
         this.updateWheels();
     },
 
+    // Creates an up/down stepper column for a numeric date unit.
     makeCol: function (type, unit, val, step = 1) {
         const col = document.createElement("div");
         col.className = "ncm-col";
@@ -1583,6 +1531,7 @@
         return col;
     },
 
+    // Creates an up/down stepper column that displays a label (e.g. month name).
     makeColLabel: function (type, unit, val) {
         const col = document.createElement("div");
         col.className = "ncm-col ncm-col-wide";
@@ -1607,6 +1556,7 @@
         return col;
     },
 
+    // Increments/decrements a date unit and auto-adjusts end if it precedes start.
     stepWheel: function (type, unit, amt) {
         const d = type === "start" ? this.editStartDate : this.editEndDate;
         if (unit === "day") d.setDate(d.getDate() + amt);
@@ -1615,11 +1565,9 @@
         else if (unit === "hour") d.setHours(d.getHours() + amt);
         else if (unit === "minute") d.setMinutes(d.getMinutes() + amt);
 
-        // Auto-adjust: Wenn Start nach Ende ist, End anpassen
         if (type === "start" && this.editStartDate >= this.editEndDate) {
-            this.editEndDate = new Date(this.editStartDate.getTime() + 3600000); // +1 Stunde
+            this.editEndDate = new Date(this.editStartDate.getTime() + 3600000);
         }
-        // Wenn End vor Start, zurücksetzen
         if (type === "end" && this.editEndDate <= this.editStartDate) {
             this.editEndDate = new Date(this.editStartDate.getTime() + 3600000);
         }
@@ -1627,15 +1575,14 @@
         this.updateWheels();
     },
 
+    // Collects form values and sends CREATE or UPDATE notification to the helper.
     saveEvent: function () {
         const title = document.getElementById("ncm-edit-title-input").value.trim();
         if (!title) { this.showAlert("Bitte Titel eingeben"); return; }
 
-        // Validate and read time inputs before saving
         this.validateTimeInput("start");
         this.validateTimeInput("end");
 
-        // Final check: end must be after start
         if (this.editEndDate <= this.editStartDate) {
             this.editEndDate = new Date(this.editStartDate.getTime() + 3600000);
         }
@@ -1652,24 +1599,22 @@
         };
 
         if (this.editingEvent) {
-            // Check if calendar changed
             const calendarChanged = this.selectedCalendar.name !== this.editingEvent.calendarName;
 
             if (calendarChanged) {
-                // Kalender gewechselt: Altes Event löschen, neues erstellen
+                // Moving to a different calendar: delete old, create new
                 this.showLoading("Termin wird verschoben…");
                 this.sendSocketNotification("DELETE_EVENT", {
                     href: this.editingEvent.href,
                     user: this.editingEvent.calendarUser,
                     pass: this.editingEvent.calendarPass,
                 });
-                // Neues Event im neuen Kalender erstellen
                 this.sendSocketNotification("CREATE_EVENT", {
                     calendar: { url: this.selectedCalendar.url, user: this.selectedCalendar.user, pass: this.selectedCalendar.pass },
                     event: ev,
                 });
             } else {
-                // Gleicher Kalender: UPDATE via PUT
+                // Same calendar: update via PUT
                 this.showLoading("Termin wird gespeichert…");
                 ev.lastModified = new Date();
                 this.sendSocketNotification("UPDATE_EVENT", {
@@ -1684,7 +1629,6 @@
                 });
             }
         } else {
-            // CREATE: Neuer Termin
             this.showLoading("Termin wird erstellt…");
             this.sendSocketNotification("CREATE_EVENT", {
                 calendar: { url: this.selectedCalendar.url, user: this.selectedCalendar.user, pass: this.selectedCalendar.pass },
@@ -1693,7 +1637,7 @@
         }
     },
 
-    // Vorschläge pro Kalender
+    // Per-calendar autocomplete suggestions for the title field.
     calendarSuggestions: {
         "Familie": ["Besuch", "Ferien", "Geburtstag"],
         "Papa": ["Geschäftsessen", "Arzt", "Meeting"],
@@ -1703,11 +1647,9 @@
         "Amelie": ["Reiten", "Tanzen", "Training"]
     },
 
-    // Standort-Vorschläge (Schweizer Städte)
+    // Swiss city list used for location autocomplete suggestions.
     locationSuggestions: [
-        // Nahe Rubigen
         "Rubigen", "Münsingen", "Worb", "Belp", "Konolfingen", "Grosshöchstetten", "Zollikofen",
-        // Grosse Städte
         "Bern", "Zürich", "Basel", "Genf", "Lausanne", "Winterthur", "Luzern", "St. Gallen",
         "Lugano", "Biel", "Thun", "Köniz", "La Chaux-de-Fonds", "Fribourg", "Schaffhausen",
         "Chur", "Vernier", "Neuchâtel", "Uster", "Sion", "Lancy", "Emmen", "Yverdon-les-Bains",
@@ -1716,11 +1658,10 @@
         "Baden", "Burgdorf", "Solothurn", "Olten", "Langenthal", "Interlaken", "Davos", "Locarno"
     ],
 
-    // Aktuelle Tastatur-Modus
-    keyboardMode: "text", // "text", "numbers", "time"
+    keyboardMode: "text",
     timeInputFirstKey: false,
 
-    // Keyboard anzeigen basierend auf Typ
+    // Switches between text and numeric time keyboard layouts.
     showKeyboard: function (type) {
         const kbArea = document.getElementById("ncm-keyboard-area");
         const suggestBar = document.getElementById("ncm-suggestions");
@@ -1731,16 +1672,14 @@
 
         if (type === "time") {
             kbArea.appendChild(this.createTimeKeyboard());
-            // Vorschläge bei Zeit-Eingabe verstecken
             if (suggestBar) suggestBar.style.display = "none";
         } else {
             kbArea.appendChild(this.createKeyboard());
-            // Vorschläge bei Text-Eingabe anzeigen
             if (suggestBar) suggestBar.style.display = "flex";
         }
     },
 
-    // Vorschläge aktualisieren
+    // Updates the autocomplete suggestion bar based on the active input field and current text.
     updateSuggestions: function () {
         const suggestBar = document.getElementById("ncm-suggestions");
         if (!suggestBar) return;
@@ -1752,11 +1691,10 @@
         let suggestions = [];
         const fullText = (activeEl?.value || "");
 
-        // Nur das letzte Wort nach dem letzten Leerzeichen für die Suche verwenden
+        // Match against the last typed word only
         const words = fullText.split(" ");
         const lastWord = words[words.length - 1].toLowerCase();
 
-        // Umfangreiche Wortliste für intelligente Vorschläge
         const generalWords = [
             "Hallo", "Heute", "Morgen", "Abend", "Arbeit", "Schule", "Sport",
             "Essen", "Einkaufen", "Arzt", "Zahnarzt", "Meeting", "Termin",
@@ -1771,22 +1709,20 @@
         ];
 
         if (activeEl === titleInput) {
-            // Titel-Vorschläge basierend auf Kalender
             const calName = this.selectedCalendar?.name || "";
             const baseSuggestions = this.calendarSuggestions[calName] || ["Termin", "Meeting", "Besprechung"];
 
             if (lastWord.length > 0) {
-                // Zuerst Kalender-spezifische Vorschläge
+                // Calendar-specific suggestions first, then general words
                 suggestions = baseSuggestions.filter(s => s.toLowerCase().startsWith(lastWord));
 
-                // Dann allgemeine Wörter hinzufügen
                 generalWords.forEach(w => {
                     if (w.toLowerCase().startsWith(lastWord) && !suggestions.includes(w)) {
                         suggestions.push(w);
                     }
                 });
 
-                // Falls noch nicht genug: auch Teilübereinstimmungen
+                // Fall back to partial matches if fewer than 3 results
                 if (suggestions.length < 3) {
                     generalWords.forEach(w => {
                         if (w.toLowerCase().includes(lastWord) && !suggestions.includes(w)) {
@@ -1798,10 +1734,8 @@
                 suggestions = baseSuggestions.slice(0, 3);
             }
         } else if (activeEl === locInput) {
-            // Standort-Vorschläge
             if (lastWord.length > 0) {
                 suggestions = this.locationSuggestions.filter(s => s.toLowerCase().startsWith(lastWord));
-                // Auch Teilübereinstimmungen
                 if (suggestions.length < 3) {
                     this.locationSuggestions.forEach(s => {
                         if (s.toLowerCase().includes(lastWord) && !suggestions.includes(s)) {
@@ -1814,12 +1748,10 @@
             }
         }
 
-        // Immer genau 3 Vorschläge anzeigen (wenn möglich)
         suggestions = suggestions.slice(0, 3);
 
         suggestBar.innerHTML = "";
 
-        // Apple-Style: Vorschläge als getrennte Bereiche mit Trennlinien
         suggestions.forEach((s, idx) => {
             const btn = document.createElement("button");
             btn.className = "ncm-suggestion-btn";
@@ -1828,7 +1760,6 @@
             btn.addEventListener("click", () => this.applySuggestion(s));
             suggestBar.appendChild(btn);
 
-            // Trennlinie zwischen Vorschlägen (nicht nach dem letzten)
             if (idx < suggestions.length - 1) {
                 const divider = document.createElement("div");
                 divider.className = "ncm-suggestion-divider";
@@ -1837,51 +1768,44 @@
         });
     },
 
+    // Replaces the last word in the active input with the selected suggestion.
     applySuggestion: function (text) {
         if (!this.activeInputField) return;
         const el = this.activeInputField;
 
-        // Text aufteilen und nur das letzte Wort ersetzen
         const fullText = el.value;
         const words = fullText.split(" ");
 
-        // Letztes Wort durch Vorschlag ersetzen
         words[words.length - 1] = text;
 
-        // Wieder zusammenfügen mit Leerzeichen am Ende
         const newValue = words.join(" ") + " ";
         el.value = newValue;
 
-        // Simple-Keyboard internen State synchronisieren
-        // Ohne das überschreibt der nächste Tastendruck den Vorschlag
+        // Keep simple-keyboard in sync with the new value
         if (this.keyboard) {
             this.keyboard.setInput(newValue);
-            // Safety check: force update if needed (manchmal braucht simple-keyboard einen kleinen Stubser)
             if (this.keyboard.getInput() !== newValue) {
                 this.keyboard.setInput(newValue);
             }
         }
 
-        // Cursor ans Ende setzen
         const len = el.value.length;
         el.selectionStart = len;
         el.selectionEnd = len;
 
-        // Fokus behalten und Vorschläge aktualisieren
         el.focus();
         this.updateSuggestions();
     },
 
-    // Simple-Keyboard Integration - QWERTZ Layout
+    // Initialises the simple-keyboard container and retries until the library is loaded.
     createKeyboard: function () {
         const self = this;
         const kb = document.createElement("div");
         kb.className = "simple-keyboard-container";
         kb.id = "ncm-kb-main";
 
-        // Retry mechanism to wait for library charge
         let moves = 0;
-        const maxMoves = 10; // 10 * 200ms = 2 seconds
+        const maxMoves = 10;
 
         const tryInit = () => {
             const kbAvailable = (typeof SimpleKeyboard !== "undefined");
@@ -1903,12 +1827,11 @@
         return kb;
     },
 
+    // Resolves the SimpleKeyboard class and initialises the QWERTZ on-screen keyboard.
     initSimpleKeyboard: function () {
         const self = this;
 
-        // Determine correct class
-        // ACHTUNG: 'Keyboard' global existiert in modernen Browsern als Web API (WebHID).
-        // Wir dürfen NICHT 'Keyboard' verwenden, sondern müssen 'SimpleKeyboard' nutzen.
+        // SimpleKeyboard must be used instead of the native Keyboard Web API
         let KeyboardClass = null;
 
         if (typeof SimpleKeyboard !== "undefined") {
@@ -1929,7 +1852,6 @@
             return;
         }
 
-        // Falls bereits initialisiert, zerstören
         if (this.keyboard) {
             this.keyboard.destroy();
         }
@@ -1995,7 +1917,6 @@
         }
     },
 
-
     onKeyboardChange: function (input) {
         if (!this.activeInputField) return;
         this.activeInputField.value = input;
@@ -2003,7 +1924,6 @@
     },
 
     onKeyPress: function (button) {
-        // Layout wechseln
         if (button === "{shift}") {
             const currentLayout = this.keyboard.options.layoutName;
             const newLayout = currentLayout === "shift" ? "default" : "shift";
@@ -2034,7 +1954,6 @@
                 const end = input.selectionEnd;
 
                 if (start === end) {
-                    // No selection - delete 1 char before cursor
                     if (start > 0) {
                         const newVal = val.slice(0, start - 1) + val.slice(end);
                         input.value = newVal;
@@ -2042,7 +1961,6 @@
                         input.selectionStart = input.selectionEnd = start - 1;
                     }
                 } else {
-                    // Selection - delete selected text
                     const newVal = val.slice(0, start) + val.slice(end);
                     input.value = newVal;
                     this.keyboard.setInput(newVal);
@@ -2052,7 +1970,7 @@
                 this.debouncedUpdateSuggestions();
             }
         } else {
-            // Normal character pressed. If in Shift mode, switch back to default (unless it's a special key)
+            // After typing a character in shift mode, revert to lowercase
             if (!button.startsWith("{")) {
                 const currentLayout = this.keyboard.options.layoutName;
                 if (currentLayout === "shift") {
@@ -2063,8 +1981,6 @@
         }
     },
 
-
-    // Zahlen/Sonderzeichen Keyboard (Apple-Style)
     showNumbersKeyboard: function () {
         const kbArea = document.getElementById("ncm-keyboard-area");
         if (!kbArea) return;
@@ -2073,6 +1989,7 @@
         kbArea.appendChild(this.createNumbersKeyboard());
     },
 
+    // Builds the numbers/symbols keyboard layout.
     createNumbersKeyboard: function () {
         const kb = document.createElement("div");
         kb.className = "ncm-kb";
@@ -2129,7 +2046,6 @@
         return kb;
     },
 
-    // Weitere Sonderzeichen
     showSymbolsKeyboard: function () {
         const kbArea = document.getElementById("ncm-keyboard-area");
         if (!kbArea) return;
@@ -2138,6 +2054,7 @@
         kbArea.appendChild(this.createSymbolsKeyboard());
     },
 
+    // Builds the extended symbols keyboard layout.
     createSymbolsKeyboard: function () {
         const kb = document.createElement("div");
         kb.className = "ncm-kb";
@@ -2193,7 +2110,7 @@
         return kb;
     },
 
-    // Zeit-Tastatur (nur Zahlen und :)
+    // Builds a numeric-only keyboard for time entry (digits 0-9 and colon).
     createTimeKeyboard: function () {
         const kb = document.createElement("div");
         kb.className = "ncm-kb ncm-kb-time";
@@ -2232,12 +2149,12 @@
         return kb;
     },
 
-    // Intelligente Zeit-Eingabe
+    // Inserts a digit into the time field, auto-inserting the colon after two digits.
     insertTimeKey: function (k) {
         const el = this.activeInputField;
         if (!el) return;
 
-        // Bei erster Eingabe: Feld leeren
+        // Clear field on first keystroke after focus
         if (this.timeInputFirstKey) {
             el.value = "";
             this.timeInputFirstKey = false;
@@ -2245,7 +2162,6 @@
 
         let val = el.value;
 
-        // Nur Zahlen und : erlauben
         if (k === ":") {
             if (!val.includes(":") && val.length > 0 && val.length <= 2) {
                 el.value = val + ":";
@@ -2253,10 +2169,9 @@
             return;
         }
 
-        // Max 5 Zeichen (HH:MM)
         if (val.length >= 5) return;
 
-        // Automatisch : nach 2 Ziffern einfügen
+        // Auto-insert colon after two digits
         if (val.length === 2 && !val.includes(":")) {
             val = val + ":";
         }
@@ -2294,17 +2209,16 @@
         }
     },
 
+    // Handles Enter: inserts newline in textarea or moves focus to the next field.
     onEnterPress: function () {
         const el = this.activeInputField;
         if (!el) return;
 
-        // Bei Textarea: Neue Zeile einfügen
         if (el.tagName === "TEXTAREA") {
             this.insertKey("\n");
             return;
         }
 
-        // Bei anderen Feldern: Zum nächsten Feld springen
         const titleInput = document.getElementById("ncm-edit-title-input");
         const locInput = document.getElementById("ncm-edit-loc");
         const notesInput = document.getElementById("ncm-edit-notes");
@@ -2320,6 +2234,7 @@
         this.updateSuggestions();
     },
 
+    // Tracks which input field is active and syncs the keyboard state.
     setActiveInput: function (el) {
         if (this.activeInputField === el) return;
 
@@ -2330,13 +2245,13 @@
         this.activeInputField = el;
         if (el) {
             el.classList.add("ncm-input-active");
-            // Synchronisiere simple-keyboard mit dem aktuellen Input-Wert
             if (this.keyboard) {
                 this.keyboard.setInput(el.value || "");
             }
         }
     },
 
+    // Inserts text at the cursor position in the active input field.
     insertKey: function (k) {
         if (!this.activeInputField) this.activeInputField = document.getElementById("ncm-edit-title-input");
         const el = this.activeInputField;
@@ -2347,16 +2262,14 @@
         el.value = el.value.slice(0, s) + k + el.value.slice(e);
         el.selectionStart = el.selectionEnd = s + k.length;
 
-        // Vorschläge mit Debouncing aktualisieren (flüssigeres Tippen)
         this.debouncedUpdateSuggestions();
     },
 
+    // Debounces suggestion updates to avoid blocking rapid key presses.
     debouncedUpdateSuggestions: function () {
-        // Cancel previous timer
         if (this.suggestionsTimer) {
             clearTimeout(this.suggestionsTimer);
         }
-        // Update suggestions after 300ms delay (gives keyboard more time)
         this.suggestionsTimer = setTimeout(() => {
             requestAnimationFrame(() => {
                 this.updateSuggestions();
@@ -2364,6 +2277,7 @@
         }, 300);
     },
 
+    // Deletes the character before the cursor (or the selected range).
     delKey: function () {
         const el = this.activeInputField;
         if (!el) return;
@@ -2393,19 +2307,19 @@
         }
     },
 
+    // Formats an event's time range as a localised string.
     formatTime: function (ev) {
         const s = new Date(ev.start);
         let e = new Date(ev.end);
 
         if (ev.isAllDay) {
-            // iCalendar DTEND ist exklusiv - 1 Tag abziehen für korrekte Anzeige
+            // Subtract 1 day because iCalendar DTEND is exclusive
             e = new Date(e.getTime() - 86400000);
             const sameDay = s.toDateString() === e.toDateString();
             if (sameDay) return s.toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric" }) + ", Ganztag";
             return s.toLocaleDateString("de-CH", { day: "numeric", month: "short" }) + " - " + e.toLocaleDateString("de-CH", { day: "numeric", month: "short", year: "numeric" }) + ", Ganztag";
         }
 
-        // sameDay für reguläre (nicht-ganztägige) Events definieren
         const sameDay = s.toDateString() === e.toDateString();
         const timeS = s.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
         const timeE = e.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
@@ -2416,10 +2330,9 @@
         return s.toLocaleDateString("de-CH", { day: "numeric", month: "short" }) + " " + timeS + " - " + e.toLocaleDateString("de-CH", { day: "numeric", month: "short" }) + " " + timeE;
     },
 
+    // Converts a hex colour string to an rgba() value with the given opacity.
     hexToRgba: function (hex, alpha) {
-        // Entferne # falls vorhanden
         hex = hex.replace('#', '');
-        // Konvertiere 3-stellige Hex zu 6-stellig
         if (hex.length === 3) {
             hex = hex.split('').map(c => c + c).join('');
         }
@@ -2429,7 +2342,7 @@
         return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     },
 
-    // Custom Alert Modal
+    // Creates the shared alert/confirm/loading modal element.
     createAlertModal: function () {
         const m = document.createElement("div");
         m.className = "ncm-modal ncm-hidden";
@@ -2451,6 +2364,7 @@
         return m;
     },
 
+    // Shows a spinner with an optional status message.
     showLoading: function (message) {
         const modal = document.getElementById("ncm-alert-modal");
         const msg = document.getElementById("ncm-alert-msg");
@@ -2470,6 +2384,7 @@
         modal.classList.remove("ncm-hidden");
     },
 
+    // Shows an alert with a single OK button.
     showAlert: function (message) {
         const modal = document.getElementById("ncm-alert-modal");
         const msgEl = document.getElementById("ncm-alert-msg");
@@ -2488,6 +2403,7 @@
         modal.classList.remove("ncm-hidden");
     },
 
+    // Shows a confirm dialog with Cancel and Delete buttons.
     showConfirm: function (message, onConfirm) {
         const modal = document.getElementById("ncm-alert-modal");
         const msgEl = document.getElementById("ncm-alert-msg");
@@ -2514,6 +2430,7 @@
         modal.classList.remove("ncm-hidden");
     },
 
+    // Shows a choice dialog for recurring events (cancel / act on whole series).
     showRecurringChoice: function (title, actionType, onChoice) {
         const modal = document.getElementById("ncm-alert-modal");
         const msg = document.getElementById("ncm-alert-msg");
@@ -2545,7 +2462,7 @@
         modal.classList.remove("ncm-hidden");
     },
 
-    // Date Picker Modal
+    // Creates the date picker modal container (content rendered on open).
     createDatePicker: function () {
         const m = document.createElement("div");
         m.className = "ncm-modal ncm-hidden";
@@ -2580,6 +2497,7 @@
         }
     },
 
+    // Renders the mini calendar grid inside the date picker modal.
     renderDatePicker: function () {
         const c = document.getElementById("ncm-datepicker-content");
         const d = this.pickerViewDate;
@@ -2589,7 +2507,6 @@
 
         c.innerHTML = "";
 
-        // Header
         const header = document.createElement("div");
         header.className = "ncm-picker-header";
 
@@ -2610,7 +2527,6 @@
         header.append(prevBtn, title, nextBtn);
         c.appendChild(header);
 
-        // Weekdays
         const weekdays = document.createElement("div");
         weekdays.className = "ncm-picker-weekdays";
         ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].forEach(d => {
@@ -2620,7 +2536,6 @@
         });
         c.appendChild(weekdays);
 
-        // Grid
         const grid = document.createElement("div");
         grid.className = "ncm-picker-grid";
 
@@ -2629,7 +2544,7 @@
         let dow = first.getDay() - 1;
         if (dow < 0) dow = 6;
 
-        // Previous month days
+        // Padding cells from the previous month
         const prev = new Date(year, month, 0);
         for (let i = dow - 1; i >= 0; i--) {
             const span = document.createElement("span");
@@ -2638,7 +2553,6 @@
             grid.appendChild(span);
         }
 
-        // Current month days
         for (let i = 1; i <= last.getDate(); i++) {
             const thisDate = new Date(year, month, i);
             const isSelected = thisDate.toDateString() === selected.toDateString();
@@ -2653,7 +2567,7 @@
             grid.appendChild(span);
         }
 
-        // Next month days
+        // Padding cells from the next month
         const total = dow + last.getDate();
         const rem = (7 - (total % 7)) % 7;
         for (let i = 1; i <= rem; i++) {
@@ -2677,7 +2591,6 @@
         d.setMonth(this.pickerViewDate.getMonth());
         d.setDate(day);
 
-        // Auto-adjust
         if (this.datePickerType === "start" && this.editStartDate >= this.editEndDate) {
             this.editEndDate = new Date(this.editStartDate.getTime() + 3600000);
         }
@@ -2689,7 +2602,7 @@
         this.updateWheels();
     },
 
-    // Time Picker Modal
+    // Creates the time picker modal container (content rendered on open).
     createTimePicker: function () {
         const m = document.createElement("div");
         m.className = "ncm-modal ncm-hidden";
@@ -2712,6 +2625,7 @@
         document.getElementById("ncm-timepicker-modal").classList.remove("ncm-hidden");
     },
 
+    // Renders scroll wheels for hour and minute selection.
     renderTimePicker: function () {
         const c = document.getElementById("ncm-timepicker-content");
         const d = this.timePickerType === "start" ? this.editStartDate : this.editEndDate;
@@ -2720,33 +2634,27 @@
 
         c.innerHTML = "";
 
-        // Title
         const title = document.createElement("div");
         title.className = "ncm-picker-title";
         title.textContent = "Zeit wählen";
         c.appendChild(title);
 
-        // Scroll wheels container
         const wheels = document.createElement("div");
         wheels.className = "ncm-scroll-wheels";
 
-        // Hour wheel
         const hourWheel = this.createScrollWheel("hour", 24, this.tempHour);
         wheels.appendChild(hourWheel);
 
-        // Separator
         const sep = document.createElement("div");
         sep.className = "ncm-wheel-sep";
         sep.textContent = ":";
         wheels.appendChild(sep);
 
-        // Minute wheel
         const minWheel = this.createScrollWheel("minute", 60, this.tempMinute);
         wheels.appendChild(minWheel);
 
         c.appendChild(wheels);
 
-        // OK Button
         const okBtn = document.createElement("button");
         okBtn.className = "ncm-btn ncm-btn-primary ncm-btn-full";
         okBtn.textContent = "OK";
@@ -2755,6 +2663,7 @@
         c.appendChild(okBtn);
     },
 
+    // Builds a single scrollable column for hours or minutes.
     createScrollWheel: function (type, max, current) {
         const container = document.createElement("div");
         container.className = "ncm-scroll-container";
@@ -2779,7 +2688,7 @@
 
         container.appendChild(list);
 
-        // Scroll to selected
+        // Scroll to the initially selected item
         setTimeout(() => {
             const selectedItem = list.querySelector(".ncm-scroll-selected");
             if (selectedItem) {
@@ -2800,7 +2709,7 @@
         });
     },
 
-    // === iOS-STYLE DRUM PICKER ===
+    // Creates the iOS-style drum (scroll-snap) picker modal.
     createDrumPicker: function () {
         const m = document.createElement("div");
         m.className = "ncm-modal ncm-hidden";
@@ -2832,58 +2741,47 @@
         document.getElementById("ncm-drum-modal").classList.remove("ncm-hidden");
     },
 
+    // Renders the drum picker with day/month/year (and optionally hour/minute) columns.
     renderDrumPicker: function () {
         const c = document.getElementById("ncm-drum-content");
         const allDay = document.getElementById("ncm-edit-allday")?.checked;
 
         c.innerHTML = "";
 
-        // Title
         const title = document.createElement("div");
         title.className = "ncm-drum-title";
         title.textContent = this.drumPickerType === "start" ? "Startzeit" : "Endzeit";
         c.appendChild(title);
 
-        // Drum wheels container
         const drums = document.createElement("div");
         drums.className = "ncm-drums";
 
-        // Day drum (1-31)
         drums.appendChild(this.createDrum("day", 31, this.tempDate.day, 1));
-
-        // Month drum (1-12)
         drums.appendChild(this.createDrum("month", 12, this.tempDate.month, 1, ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]));
-
-        // Year drum
         drums.appendChild(this.createYearDrum(this.tempDate.year));
 
         if (!allDay) {
-            // Separator
             const sep = document.createElement("div");
             sep.className = "ncm-drum-sep";
             drums.appendChild(sep);
 
-            // Hour drum (0-23)
             drums.appendChild(this.createDrum("hour", 24, this.tempDate.hour, 0));
 
-            // Colon
             const colon = document.createElement("div");
             colon.className = "ncm-drum-colon";
             colon.textContent = ":";
             drums.appendChild(colon);
 
-            // Minute drum (0-59)
             drums.appendChild(this.createDrum("minute", 60, this.tempDate.minute, 0));
         }
 
         c.appendChild(drums);
 
-        // Selection highlight bar
+        // Highlight bar centred over the selected row
         const highlight = document.createElement("div");
         highlight.className = "ncm-drum-highlight";
         drums.appendChild(highlight);
 
-        // OK Button
         const okBtn = document.createElement("button");
         okBtn.className = "ncm-btn ncm-btn-primary ncm-btn-full";
         okBtn.textContent = "OK";
@@ -2891,6 +2789,7 @@
         c.appendChild(okBtn);
     },
 
+    // Creates a single drum column with scroll-snap and optional label array.
     createDrum: function (type, max, current, startFrom, labels = null) {
         const drum = document.createElement("div");
         drum.className = "ncm-drum";
@@ -2901,7 +2800,7 @@
         const list = document.createElement("div");
         list.className = "ncm-drum-list";
 
-        // Add extra padding items for smoother scroll experience
+        // Top padding items for smoother overscroll feel
         for (let p = 0; p < 3; p++) {
             const pad = document.createElement("div");
             pad.className = "ncm-drum-item ncm-drum-pad";
@@ -2927,7 +2826,7 @@
             list.appendChild(item);
         }
 
-        // Add extra padding items for smoother scroll
+        // Bottom padding items
         for (let p = 0; p < 3; p++) {
             const pad = document.createElement("div");
             pad.className = "ncm-drum-item ncm-drum-pad";
@@ -2936,12 +2835,12 @@
 
         drum.appendChild(list);
 
-        // Initial scroll to selected value
         setTimeout(() => this.scrollDrumToValue(drum, current, startFrom), 50);
 
         return drum;
     },
 
+    // Creates the year drum showing currentYear-2 to currentYear+5.
     createYearDrum: function (currentYear) {
         const drum = document.createElement("div");
         drum.className = "ncm-drum ncm-drum-year";
@@ -2950,7 +2849,6 @@
         const list = document.createElement("div");
         list.className = "ncm-drum-list";
 
-        // Padding
         for (let p = 0; p < 2; p++) {
             const pad = document.createElement("div");
             pad.className = "ncm-drum-item ncm-drum-pad";
@@ -2972,7 +2870,6 @@
             list.appendChild(item);
         }
 
-        // Padding
         for (let p = 0; p < 2; p++) {
             const pad = document.createElement("div");
             pad.className = "ncm-drum-item ncm-drum-pad";
@@ -2980,30 +2877,27 @@
         }
 
         drum.appendChild(list);
-        // No scroll listener - let CSS scroll-snap handle it
         setTimeout(() => this.scrollDrumToValue(drum, currentYear, startYear), 50);
 
         return drum;
     },
 
+    // Scrolls a drum list so that the given value is centred.
     scrollDrumToValue: function (drum, value, startFrom) {
         const list = drum.querySelector(".ncm-drum-list");
         const itemHeight = 40;
-        const paddingItems = 3; // Number of padding items at start
         const index = value - startFrom;
-        // Scroll to position accounting for padding items
         list.scrollTop = index * itemHeight;
     },
 
+    // Reads the current scroll position of all drums and writes them to tempDate.
     readDrumValues: function () {
-        // Read current scroll positions and update tempDate
         const drums = document.querySelectorAll(".ncm-drum");
         drums.forEach(drum => {
             const type = drum.dataset.type;
             const list = drum.querySelector(".ncm-drum-list");
             const itemHeight = 40;
             const index = Math.round(list.scrollTop / itemHeight);
-            const startFrom = parseInt(drum.dataset.startFrom) || 0;
 
             if (type === "day") this.tempDate.day = index + 1;
             else if (type === "month") this.tempDate.month = index + 1;
@@ -3016,8 +2910,8 @@
         });
     },
 
+    // Applies the drum picker selection to the edit dates and closes the picker.
     confirmDrumPicker: function () {
-        // Read current scroll positions
         this.readDrumValues();
 
         const d = this.drumPickerType === "start" ? this.editStartDate : this.editEndDate;
@@ -3028,7 +2922,6 @@
         d.setHours(this.tempDate.hour);
         d.setMinutes(this.tempDate.minute);
 
-        // Auto-adjust
         if (this.drumPickerType === "start" && this.editStartDate >= this.editEndDate) {
             this.editEndDate = new Date(this.editStartDate.getTime() + 3600000);
         }
